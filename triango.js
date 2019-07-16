@@ -1,4 +1,4 @@
-/////////////////////////////////////////HTMLCanvasElement
+/////////////////////////////////////////
 class Input {
   /**
    * 监听输入
@@ -84,82 +84,130 @@ class Board {
 }
 
 /////////////////////////////////////////
-class Status {
-  /**
-   * @param {CanvasRenderingContext2D} ctx
-   * @param {Board} board
-   * @param {Input} input
-   */
-  constructor(ctx, board, input) {
-    this.ctx = ctx;
-    this.board = board;
-    this.input = input;
+class State {
+  /** @param {Game} game */
+  constructor(game) {
+    this.game = game;
     this.drawlist = [];
   }
-  processInput() {
+  nextState() {
     throw "abstract method";
   }
+
+  handleInput() {
+    throw "abstract method";
+  }
+
   update() {
     throw "abstract method";
   }
+
   render() {
     this.drawBoard();
     this.drawlist.forEach(obj => {
       obj.draw(this.ctx);
     });
   }
+
   drawBoard() {
-    const ctx = this.ctx;
+    const ctx = this.game.ctx;
     ctx.fillText("HelloWorld!", 50, 50);
   }
+
+  setGame(game) {
+    this.game = game;
+    return this;
+  }
+}
+
+//static allState
+State.allState = {
+  gameStart: new GameStart(),
+  gameEnd: new GameEnd(),
+  playersTurn: new PlayersTurn(),
+  aisTurn: new AIsTurn()
 }
 
 /////////////////////////////////////////
-class PlayersTurn extends Status {
-  /**
-   * @param {CanvasRenderingContext2D} ctx
-   * @param {Board} board
-   * @param {Input} input
-   */
-  constructor(ctx, board, input) {
-    super(ctx, board, input);
+class StateStack {
+  constructor() {
+    this.states = [];
+    this.top = 0;
   }
 
+  pop() {
+    if (this.top < 1) {
+      return undefined;
+    }
+    return this.states[--this.top];
+  }
+
+  /** @param {State} state */
+  push(state) {
+    this.states[this.top++] = state;
+  }
+
+  peek() {
+    if (this.top > 0) {
+      return this.states[this.top - 1];
+    } else {
+      return undefined;
+    }
+  }
+
+  length() {
+    return this.top();
+  }
+
+  clear() {
+    delete this.states;
+    this.states = [];
+    this.top = 0;
+  }
+
+  handleInput() {
+    let top_state = this.peek();
+    top_state && top_state.handleInput();
+  }
+
+  update() {
+    let top_state = this.peek();
+    top_state && top_state.update();
+  }
+
+  render() {
+    let top_state = this.peek();
+    top_state && top_state.render();
+  }
 }
 
 /////////////////////////////////////////
-class AIsTurn {
-
-}
-
-/////////////////////////////////////////
-class Traingo {
+class Game {
   constructor() {
     this.canvas = document.createElement("canvas");
     this.canvas.width = 600;
     this.canvas.height = 600;
     this.ctx = this.canvas.getContext("2d");
     this.ms_update_delay = 16;
-    this.board = new Board();
     this.input = new Input(this.canvas);
     this.input.listen();
-    this.status = new PlayersTurn(this.ctx, this.board, this.input);
+    this.state_stack = new StateStack();
   }
 
   getCanvas() {
     return this.canvas;
   }
 
-  processInput() {
-    this.status.processInput();
+  handleInput() {
+    this.state_stack.handleInput();
   }
 
   update() {
-    this.status.update();
+    this.state_stack.update();
   }
 
   render() {
-    this.status.render();
+    this.state_stack.render();
   }
 
   run() {
@@ -171,7 +219,7 @@ class Traingo {
       let elapsed = current - previous;
       previous = current;
       lag += elapsed;
-      this.processInput();
+      this.handleInput();
 
       while (lag >= this.ms_update_delay) {
         this.update();
@@ -183,14 +231,112 @@ class Traingo {
 
     requestAnimationFrame(gameloop);
   }
+
+  changeState(state) {
+    this.state_stack.push(state);
+  }
+
+  rollbackState() {
+    return this.state_stack.pop();
+  }
+}
+
+/////////////////////////////////////////
+class Traingo extends Game {
+  constructor() {
+    super();
+    this.state_stack.push(State.allState.gameStart.setGame(this));
+  }
+
+}
+
+/////////////////////////////////////////
+class GameStart extends State {
+  /** @param {Game} game */
+  constructor(game) {
+    super(game);
+  }
+
+  nextState() {
+    this.game.changeState(State.allState.playersTurn.setGame(this.game));
+  }
+
+  handleInput() {
+
+  }
+
+  update() {
+
+  }
+
+}
+
+class GameEnd extends State {
+  /** @param {Game} game */
+  constructor(game) {
+    super(game);
+  }
+
+  nextState() {
+    this.game.changeState(State.allState.gameStart.setGame(this.game));
+  }
+
+  handleInput() {
+
+  }
+
+  update() {
+
+  }
+
+}
+
+/////////////////////////////////////////
+class PlayersTurn extends State {
+  /** @param {Game} game */
+  constructor(game) {
+    super(game);
+  }
+
+  nextState() {
+    this.game.changeState(State.allState.aisTurn.setGame(this.game));
+  }
+
+  handleInput() {
+
+  }
+
+  update() {
+
+  }
+
+}
+
+/////////////////////////////////////////
+class AIsTurn {
+  /** @param {Game} game */
+  constructor(game) {
+    super(game);
+  }
+
+  nextState() {
+    this.game.changeState(State.allState.playersTurn.setGame(this.game));
+  }
+
+  handleInput() {
+
+  }
+
+  update() {
+
+  }
+
 }
 
 /////////////////////////////////////////
 function main() {
   let game = new Traingo();
   document.getElementById("triango").appendChild(game.getCanvas());
-  let i = new InputManager((game.getCanvas()));
-  i.listen();
   game.run();
 }
 
