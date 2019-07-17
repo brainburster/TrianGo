@@ -28,6 +28,8 @@ class Game {
   }
 
   render() {
+    this.ctx.fillStyle = '#CCC';
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     this.state_stack.render();
   }
 

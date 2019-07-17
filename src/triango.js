@@ -2,6 +2,7 @@ import {
   State,
 } from './game.state';
 import Game from './game';
+import TriangoBoard from './triango.board';
 /* eslint-disable*/
 // ///////////////////////////////////////
 /**
@@ -10,13 +11,12 @@ import Game from './game';
  */
 // ///////////////////////////////////////
 class GameStart extends State {
-  /** @param {Game} game */
-  constructor(game) {
-    super(game);
+  constructor() {
+    super();
   }
 
   nextState() {
-    this.game.changeState(triango.allGameState.playersTurn);
+    getGame().changeState(getAllGameState().playersTurn);
   }
 
   handleInput() {
@@ -31,6 +31,7 @@ class GameStart extends State {
     const {
       ctx,
     } = this.game;
+    ctx.fillStyle = 'black';
     ctx.fillText('helloWorld!', 50, 50);
     super.render();
   }
@@ -43,13 +44,12 @@ class GameStart extends State {
  */
 // ///////////////////////////////////////
 class GameEnd extends State {
-  /** @param {Game} game */
-  constructor(game) {
-    super(game);
+  constructor() {
+    super();
   }
 
   nextState() {
-    this.game.changeState(triango.allGameState.gameStart);
+    getGame().changeState(getAllGameState().gameStart);
   }
 
   handleInput() {
@@ -68,18 +68,14 @@ class GameEnd extends State {
  */
 // ///////////////////////////////////////
 class InGame extends State {
-  /** @param {Game} game */
-  constructor(game) {
-    super(game);
+  constructor() {
+    super();
+    this.board = new TriangoBoard();
   }
 
   render() {
-    this.drawBoard();
+    this.board.render(getCtx());
     super.render();
-  }
-
-  drawBoard() {
-    // ...................
   }
 }
 
@@ -90,13 +86,12 @@ class InGame extends State {
  */
 // ///////////////////////////////////////
 class PlayersTurn extends InGame {
-  /** @param {Game} game */
-  constructor(game) {
-    super(game);
+  constructor() {
+    super();
   }
 
   nextState() {
-    this.game.changeState(triango.allGameState.aisTurn);
+    getGame().changeState(getAllGameState().aIsTurn);
   }
 
   handleInput() {
@@ -115,13 +110,12 @@ class PlayersTurn extends InGame {
  */
 // ///////////////////////////////////////
 class AIsTurn extends InGame {
-  /** @param {Game} game */
-  constructor(game) {
-    super(game);
+  constructor() {
+    super();
   }
 
   nextState() {
-    this.game.changeState(triango.allGameState.playersTurn);
+    getGame().changeState(getAllGameState().playersTurn);
   }
 
   handleInput() {
@@ -137,30 +131,55 @@ class AIsTurn extends InGame {
 // ///////////////////////////////////////
 /**
  * 全局对象 triango ,
- * 用于获取game的单例
+ * 用于获取游戏以及游戏状态的单例
  */
 // ///////////////////////////////////////
 // eslint-disable-next-line func-names
 const triango = (function () {
   const game = new Game();
 
-  function getGame() {
-    return game;
-  }
-
   const allGameState = {
-    gameStart: new GameStart(game),
-    gameEnd: new GameEnd(game),
-    playersTurn: new PlayersTurn(game),
-    aisTurn: new AIsTurn(game),
+    gameStart: new GameStart(),
+    gameEnd: new GameEnd(),
+    playersTurn: new PlayersTurn(),
+    aIsTurn: new AIsTurn(),
   };
 
-  game.changeState(allGameState.gameStart);
+  // game.changeState(allGameState.gameStart);
+  game.changeState(allGameState.playersTurn);
 
   return {
-    getGame,
+    getGame: () => game,
     allGameState,
   };
 }());
+
+function getGame() {
+  return triango.getGame();
+}
+
+function getCtx() {
+  return triango.getGame().ctx;
+}
+
+// function getCanvas() {
+//   return triango.getGame().canvas;
+// }
+
+function getAllGameState() {
+  return triango.allGameState();
+}
+
+// /**
+//  * 从一个简易对象池中获取游戏状态对象
+//  * @param {string} WhatState 游戏状态的类型（使用字符串）
+//  * @returns {State} 返回一个游戏状态对象
+//  */
+// function createGameState(WhatState) {
+//   if (typeof (WhatState) !== 'string') {
+//     throw new Error('参数必须为字符串');
+//   }
+//   return triango.allGameState[WhatState];
+// }
 
 export default triango;

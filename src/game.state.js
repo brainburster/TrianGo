@@ -1,7 +1,5 @@
 class State {
-  /** @param {Game} game */
-  constructor(game) {
-    this.game = game;
+  constructor() {
     this.gameObjs = [];
   }
 
