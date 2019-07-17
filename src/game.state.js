@@ -4,26 +4,22 @@ class State {
     this.game = game;
     this.gameObjs = [];
   }
-  nextState() {
-    throw 'abstract method';
-  }
 
-  handleInput() {
-    throw 'abstract method';
-  }
+  // nextState() {
+  //   throw 'abstract method';
+  // }
+
+  // handleInput() {
+  //   throw 'abstract method';
+  // }
 
   update() {
-    this.gameObjs.forEach(obj => {
-      obj && obj.update && obj.update();
-    });
+    this.gameObjs.forEach(obj => obj && obj.update && obj.update());
   }
 
   render() {
-    this.gameObjs.forEach(obj => {
-      obj && obj.render && obj.render(this.ctx);
-    });
+    this.gameObjs.forEach(obj => obj && obj.render && obj.render(this.ctx));
   }
-
 }
 
 class StateStack {
@@ -36,20 +32,19 @@ class StateStack {
     if (this.top < 1) {
       return undefined;
     }
-    return this.states[--this.top];
+    return this.states[--this.top]; // eslint-disable-line
   }
 
   /** @param {State} state */
   push(state) {
-    this.states[this.top++] = state;
+    this.states[this.top++] = state; // eslint-disable-line
   }
 
   peek() {
     if (this.top > 0) {
       return this.states[this.top - 1];
-    } else {
-      return undefined;
     }
+    return undefined;
   }
 
   length() {
@@ -63,22 +58,22 @@ class StateStack {
   }
 
   handleInput() {
-    let top_state = this.peek();
-    top_state && top_state.handleInput && top_state.handleInput();
+    const topState = this.peek();
+    return topState && topState.handleInput && topState.handleInput();
   }
 
   update() {
-    let top_state = this.peek();
-    top_state && top_state.update && top_state.update();
+    const topState = this.peek();
+    return topState && topState.update && topState.update();
   }
 
   render() {
-    let top_state = this.peek();
-    top_state && top_state.render && top_state.render();
+    const topState = this.peek();
+    return topState && topState.render && topState.render();
   }
 }
 
 export {
   State,
-  StateStack
+  StateStack,
 };

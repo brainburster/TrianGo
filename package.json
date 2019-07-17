@@ -1,0 +1,31 @@
+{
+  "name": "triango",
+  "version": "1.0.0",
+  "description": "a html5 game",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brainburster/Triango.git"
+  },
+  "keywords": [
+    "Triangle",
+    "Go"
+  ],
+  "author": "Liyuan Zeng",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/brainburster/Triango/issues"
+  },
+  "homepage": "https://github.com/brainburster/Triango#readme",
+  "devDependencies": {
+    "eslint": "^5.16.0",
+    "eslint-config-airbnb-base": "^13.2.0",
+    "eslint-plugin-html": "^6.0.0",
+    "eslint-plugin-import": "^2.18.0",
+    "eslint-plugin-json": "^1.4.0"
+  },
+  "dependencies": {}
+}

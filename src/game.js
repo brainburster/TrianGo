@@ -1,6 +1,6 @@
 import Input from './input';
 import {
-  StateStack
+  StateStack,
 } from './game.state';
 
 class Game {
@@ -32,12 +32,12 @@ class Game {
   }
 
   run() {
-    let previous = (new Date).getTime();
+    let previous = (new Date()).getTime();
     let lag = 0.0;
 
-    let gameloop = () => {
-      let current = (new Date).getTime();
-      let elapsed = current - previous;
+    const gameloop = () => {
+      const current = (new Date()).getTime();
+      const elapsed = current - previous;
       previous = current;
       lag += elapsed;
       this.handleInput();
@@ -48,7 +48,7 @@ class Game {
       }
       this.render();
       requestAnimationFrame(gameloop);
-    }
+    };
 
     requestAnimationFrame(gameloop);
   }

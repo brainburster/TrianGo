@@ -1,4 +1,5 @@
 class TriangoBoard {
+  // eslint-disable-next-line
   constructor() {
 
   }

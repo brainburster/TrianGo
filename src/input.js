@@ -1,7 +1,7 @@
 class Input {
   /**
    * 监听输入
-   * @param {HTMLCanvasElement} canvas 
+   * @param {HTMLCanvasElement} canvas
    */
   constructor(canvas) {
     this.canvas = canvas;
@@ -15,17 +15,18 @@ class Input {
     this.rBtnDown = false;
     this.mouseLeave = true;
   }
+
   listen() {
-    this.canvas.addEventListener('mouseleave', (e) => {
+    this.canvas.addEventListener('mouseleave', () => {
       this.mouseLeave = true;
-    })
-    this.canvas.addEventListener('mouseenter', (e) => {
+    });
+    this.canvas.addEventListener('mouseenter', () => {
       this.mouseLeave = false;
-    })
+    });
     this.canvas.addEventListener('mousemove', (e) => {
       this.mouseX = e.offsetX;
       this.mouseY = e.offsetY;
-    })
+    });
     this.canvas.addEventListener('mousedown', (e) => {
       this.mouseX = e.offsetX;
       this.mouseY = e.offsetY;
@@ -71,7 +72,7 @@ class Input {
     window.addEventListener('keyup', (e) => {
       this.keyDown[e.key] = false;
       this.keyCodeDown[e.keyCode] = false;
-    })
+    });
   }
 }
 
