@@ -31,13 +31,13 @@ class Input {
       this.mouseX = e.offsetX;
       this.mouseY = e.offsetY;
       switch (e.button) {
-        case '0':
+        case 0:
           this.lBtnDown = true;
           break;
-        case '1':
+        case 1:
           this.mBtnDown = true;
           break;
-        case '2':
+        case 2:
           this.rBtnDown = true;
           break;
         default:
@@ -48,13 +48,13 @@ class Input {
       this.mouseX = e.offsetX;
       this.mouseY = e.offsetY;
       switch (e.button) {
-        case '0':
+        case 0:
           this.lBtnDown = false;
           break;
-        case '1':
+        case 1:
           this.mBtnDown = false;
           break;
-        case '2':
+        case 2:
           this.rBtnDown = false;
           break;
         default:

@@ -1,4 +1,5 @@
 import global from '../global';
+import TriangoBoard from '../triangoBoard';
 
 const allGameStates = {
   gameStart: null,
@@ -40,6 +41,8 @@ allGameStates.gameEnd = (function GameEnd() {
   };
   return o;
 }());
+const game = global.getGame();
+game.triangoBoard = new TriangoBoard();
 
 // ///////////////////////////////////////
 /**
@@ -47,13 +50,14 @@ allGameStates.gameEnd = (function GameEnd() {
  */
 // ///////////////////////////////////////
 allGameStates.playersTurn = (function PlayersTurn() {
-  const board = global.getBoard();
   const ctx = global.getCtx();
   const o = {};
   o.nextState = () => allGameStates.aisTurn;
-  o.handleInput = () => {};
+  o.handleInput = () => {
+    game.triangoBoard.handleInput();
+  };
   o.render = () => {
-    board.render(ctx);
+    game.triangoBoard.render(ctx);
   };
   return o;
 }());
@@ -65,13 +69,14 @@ allGameStates.playersTurn = (function PlayersTurn() {
  */
 // ///////////////////////////////////////
 allGameStates.aisTurn = (function AIsTurn() {
-  const board = global.getBoard();
   const ctx = global.getCtx();
   const o = {};
   o.nextState = () => allGameStates.playersTurn;
-  o.handleInput = () => {};
+  o.handleInput = () => {
+    game.triangoBoard.handleInput();
+  };
   o.render = () => {
-    board.render(ctx);
+    game.triangoBoard.render(ctx);
   };
   return o;
 }());

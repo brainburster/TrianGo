@@ -172,6 +172,8 @@ class Game {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _global__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../global */ "./src/global.js");
+/* harmony import */ var _triangoBoard__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../triangoBoard */ "./src/triangoBoard.js");
+
 
 
 const allGameStates = {
@@ -214,6 +216,8 @@ allGameStates.gameEnd = (function GameEnd() {
   };
   return o;
 }());
+const game = _global__WEBPACK_IMPORTED_MODULE_0__["default"].getGame();
+game.triangoBoard = new _triangoBoard__WEBPACK_IMPORTED_MODULE_1__["default"]();
 
 // ///////////////////////////////////////
 /**
@@ -221,13 +225,14 @@ allGameStates.gameEnd = (function GameEnd() {
  */
 // ///////////////////////////////////////
 allGameStates.playersTurn = (function PlayersTurn() {
-  const board = _global__WEBPACK_IMPORTED_MODULE_0__["default"].getBoard();
   const ctx = _global__WEBPACK_IMPORTED_MODULE_0__["default"].getCtx();
   const o = {};
   o.nextState = () => allGameStates.aisTurn;
-  o.handleInput = () => {};
+  o.handleInput = () => {
+    game.triangoBoard.handleInput();
+  };
   o.render = () => {
-    board.render(ctx);
+    game.triangoBoard.render(ctx);
   };
   return o;
 }());
@@ -239,13 +244,14 @@ allGameStates.playersTurn = (function PlayersTurn() {
  */
 // ///////////////////////////////////////
 allGameStates.aisTurn = (function AIsTurn() {
-  const board = _global__WEBPACK_IMPORTED_MODULE_0__["default"].getBoard();
   const ctx = _global__WEBPACK_IMPORTED_MODULE_0__["default"].getCtx();
   const o = {};
   o.nextState = () => allGameStates.playersTurn;
-  o.handleInput = () => {};
+  o.handleInput = () => {
+    game.triangoBoard.handleInput();
+  };
   o.render = () => {
-    board.render(ctx);
+    game.triangoBoard.render(ctx);
   };
   return o;
 }());
@@ -266,21 +272,17 @@ allGameStates.aisTurn = (function AIsTurn() {
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _game__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./game */ "./src/game.js");
 /* harmony import */ var _input__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./input */ "./src/input.js");
-/* harmony import */ var _triango_board__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./triango.board */ "./src/triango.board.js");
-
 
 
 
 const global = (() => {
   const game = new _game__WEBPACK_IMPORTED_MODULE_0__["default"]();
-  const board = new _triango_board__WEBPACK_IMPORTED_MODULE_2__["default"]();
   const input = new _input__WEBPACK_IMPORTED_MODULE_1__["default"](game.canvas);
   input.listen();
   return {
     getGame: () => game,
     getCtx: () => game.ctx,
     getCanvas: () => game.canvas,
-    getBoard: () => board,
     getInput: () => input,
   };
 })();
@@ -333,13 +335,13 @@ class Input {
       this.mouseX = e.offsetX;
       this.mouseY = e.offsetY;
       switch (e.button) {
-        case '0':
+        case 0:
           this.lBtnDown = true;
           break;
-        case '1':
+        case 1:
           this.mBtnDown = true;
           break;
-        case '2':
+        case 2:
           this.rBtnDown = true;
           break;
         default:
@@ -350,13 +352,13 @@ class Input {
       this.mouseX = e.offsetX;
       this.mouseY = e.offsetY;
       switch (e.button) {
-        case '0':
+        case 0:
           this.lBtnDown = false;
           break;
-        case '1':
+        case 1:
           this.mBtnDown = false;
           break;
-        case '2':
+        case 2:
           this.rBtnDown = false;
           break;
         default:
@@ -399,7 +401,7 @@ __webpack_require__.r(__webpack_exports__);
 
 function main() {
   const game = _global__WEBPACK_IMPORTED_MODULE_0__["default"].getGame();
-  game.changeState(_gameState_game_state__WEBPACK_IMPORTED_MODULE_1__["default"].gameStart);
+  game.changeState(_gameState_game_state__WEBPACK_IMPORTED_MODULE_1__["default"].playersTurn);
   document.getElementById('triango').appendChild(game.getCanvas());
   game.run();
 }
@@ -577,25 +579,130 @@ class Triangle {
 
 /***/ }),
 
-/***/ "./src/triango.board.js":
-/*!******************************!*\
-  !*** ./src/triango.board.js ***!
-  \******************************/
+/***/ "./src/triangleChecker.js":
+/*!********************************!*\
+  !*** ./src/triangleChecker.js ***!
+  \********************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _triangle__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./triangle */ "./src/triangle.js");
+/* harmony import */ var _global__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./global */ "./src/global.js");
+
+
+
+const ctx = _global__WEBPACK_IMPORTED_MODULE_1__["default"].getCtx();
+const input = _global__WEBPACK_IMPORTED_MODULE_1__["default"].getInput();
+
+const CheckerState = {
+  normal: {
+    onStart: (tribtn) => {
+      tribtn.setColor('black');
+    },
+    handleInput: (tribtn) => {
+      const x = input.mouseX;
+      const y = input.mouseY;
+      if (!tribtn.triangle.mouseCheck(x, y)) {
+        return;
+      }
+      if (input.lBtnDown) {
+        tribtn.changeState(CheckerState.active);
+      } else {
+        tribtn.changeState(CheckerState.hover);
+      }
+    },
+  },
+  hover: {
+    onStart: (tribtn) => {
+      tribtn.setColor('yellow');
+    },
+    handleInput: (tribtn) => {
+      const x = input.mouseX;
+      const y = input.mouseY;
+      if (input.lBtnDown) {
+        tribtn.changeState(CheckerState.active);
+      } else if (!tribtn.triangle.mouseCheck(x, y)) {
+        tribtn.changeState(CheckerState.normal);
+      }
+    },
+  },
+  active: {
+    onStart: (tribtn) => {
+      tribtn.setColor('red');
+    },
+    handleInput: (tribtn) => {
+      const x = input.mouseX;
+      const y = input.mouseY;
+      if (!tribtn.triangle.mouseCheck(x, y)) {
+        tribtn.changeState(CheckerState.normal);
+        return;
+      }
+      if (!input.lBtnDown) {
+        tribtn.changeState(CheckerState.hover);
+      }
+    },
+  },
+};
+
+class TriangleChecker {
+  constructor(x, y, r, up, color) {
+    this.triangle = new _triangle__WEBPACK_IMPORTED_MODULE_0__["default"](x, y, r, up, color);
+    this.state = CheckerState.normal;
+  }
+
+  setColor(color) {
+    this.triangle.color = color;
+  }
+
+  changeState(state) {
+    this.state = state;
+    this.state.onStart(this);
+  }
+
+  render() {
+    this.triangle.draw(ctx);
+    // return this.state && this.state.draw && this.state.draw(this);
+  }
+
+  handleInput() {
+    return this.state && this.state.handleInput && this.state.handleInput(this);
+  }
+
+  update() {
+    return this.state && this.state.update && this.state.update(this);
+  }
+}
+
+/* harmony default export */ __webpack_exports__["default"] = (TriangleChecker);
+
+
+/***/ }),
+
+/***/ "./src/triangoBoard.js":
+/*!*****************************!*\
+  !*** ./src/triangoBoard.js ***!
+  \*****************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _triangleChecker__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./triangleChecker */ "./src/triangleChecker.js");
 
 
 class TriangoBoard {
   constructor() {
-    this.triangle = new _triangle__WEBPACK_IMPORTED_MODULE_0__["default"](200, 200, 50, true, 'black');
+    this.triangleChecker = new _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["default"](200, 200, 50, true, 'black');
   }
 
-  render(ctx) {
-    this.triangle.draw(ctx);
+  render() {
+    this.triangleChecker.render();
+  }
+
+  handleInput() {
+    this.triangleChecker.handleInput();
   }
 }
 
