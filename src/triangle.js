@@ -24,9 +24,7 @@ class Triangle {
     }
   }
 
-  /**
-   * @param {CanvasRenderingContext2D} ctx
-   */
+  /** @param {CanvasRenderingContext2D} ctx */
   draw(ctx) {
     ctx.beginPath();
     ctx.moveTo(this.x1, this.y1);
@@ -37,7 +35,7 @@ class Triangle {
     ctx.fill();
   }
 
-  pointCheck(x, y) {
+  mouseCheck(x, y) {
     if (x < this.x1 || x > this.x2) {
       return false;
     }

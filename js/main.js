@@ -95,9 +95,7 @@
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _input__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./input */ "./src/input.js");
-/* harmony import */ var _game_state__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./game.state */ "./src/game.state.js");
-
+/* harmony import */ var _stateStack__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./stateStack */ "./src/stateStack.js");
 
 
 class Game {
@@ -107,9 +105,7 @@ class Game {
     this.canvas.height = 600;
     this.ctx = this.canvas.getContext('2d');
     this.ms_update_delay = 16;
-    this.input = new _input__WEBPACK_IMPORTED_MODULE_0__["default"](this.canvas);
-    this.input.listen();
-    this.state_stack = new _game_state__WEBPACK_IMPORTED_MODULE_1__["StateStack"]();
+    this.state_stack = new _stateStack__WEBPACK_IMPORTED_MODULE_0__["default"]();
   }
 
   getCanvas() {
@@ -166,91 +162,131 @@ class Game {
 
 /***/ }),
 
-/***/ "./src/game.state.js":
-/*!***************************!*\
-  !*** ./src/game.state.js ***!
-  \***************************/
-/*! exports provided: State, StateStack */
+/***/ "./src/gameState/game.state.js":
+/*!*************************************!*\
+  !*** ./src/gameState/game.state.js ***!
+  \*************************************/
+/*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "State", function() { return State; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "StateStack", function() { return StateStack; });
-class State {
-  constructor() {
-    this.gameObjs = [];
-  }
-
-  // nextState() {
-  //   throw 'abstract method';
-  // }
-
-  // handleInput() {
-  //   throw 'abstract method';
-  // }
-
-  update() {
-    this.gameObjs.forEach(obj => obj && obj.update && obj.update());
-  }
-
-  render() {
-    this.gameObjs.forEach(obj => obj && obj.render && obj.render(this.ctx));
-  }
-}
-
-class StateStack {
-  constructor() {
-    this.states = [];
-    this.top = 0;
-  }
-
-  pop() {
-    if (this.top < 1) {
-      return undefined;
-    }
-    return this.states[--this.top]; // eslint-disable-line
-  }
-
-  /** @param {State} state */
-  push(state) {
-    this.states[this.top++] = state; // eslint-disable-line
-  }
-
-  peek() {
-    if (this.top > 0) {
-      return this.states[this.top - 1];
-    }
-    return undefined;
-  }
-
-  length() {
-    return this.top;
-  }
-
-  clear() {
-    delete this.states;
-    this.states = [];
-    this.top = 0;
-  }
-
-  handleInput() {
-    const topState = this.peek();
-    return topState && topState.handleInput && topState.handleInput();
-  }
-
-  update() {
-    const topState = this.peek();
-    return topState && topState.update && topState.update();
-  }
-
-  render() {
-    const topState = this.peek();
-    return topState && topState.render && topState.render();
-  }
-}
+/* harmony import */ var _global__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../global */ "./src/global.js");
 
 
+const allGameStates = {
+  gameStart: null,
+  gameEnd: null,
+  playersTurn: null,
+  aisTurn: null,
+};
+
+// ///////////////////////////////////////
+/**
+ * 游戏开始（设置）界面
+ */
+// ///////////////////////////////////////
+allGameStates.gameStart = (function GameStart() {
+  const ctx = _global__WEBPACK_IMPORTED_MODULE_0__["default"].getCtx();
+  const o = {};
+  o.nextState = () => allGameStates.playersTurn;
+  o.handleInput = () => {};
+  o.render = () => {
+    ctx.fillStyle = 'black';
+    ctx.fillText('gameStart!', 50, 50);
+  };
+  return o;
+}());
+
+// ///////////////////////////////////////
+/**
+ * 游戏结束界面
+ */
+// ///////////////////////////////////////
+allGameStates.gameEnd = (function GameEnd() {
+  const ctx = _global__WEBPACK_IMPORTED_MODULE_0__["default"].getCtx();
+  const o = {};
+  o.nextState = () => allGameStates.gameStart;
+  o.handleInput = () => {};
+  o.render = () => {
+    ctx.fillStyle = 'black';
+    ctx.fillText('gameEnd!', 50, 50);
+  };
+  return o;
+}());
+
+// ///////////////////////////////////////
+/**
+ * 轮到玩家的回合
+ */
+// ///////////////////////////////////////
+allGameStates.playersTurn = (function PlayersTurn() {
+  const board = _global__WEBPACK_IMPORTED_MODULE_0__["default"].getBoard();
+  const ctx = _global__WEBPACK_IMPORTED_MODULE_0__["default"].getCtx();
+  const o = {};
+  o.nextState = () => allGameStates.aisTurn;
+  o.handleInput = () => {};
+  o.render = () => {
+    board.render(ctx);
+  };
+  return o;
+}());
+
+// ///////////////////////////////////////
+/**
+ * 轮到轮到AI的回合
+ * class AIsTurn : InGame
+ */
+// ///////////////////////////////////////
+allGameStates.aisTurn = (function AIsTurn() {
+  const board = _global__WEBPACK_IMPORTED_MODULE_0__["default"].getBoard();
+  const ctx = _global__WEBPACK_IMPORTED_MODULE_0__["default"].getCtx();
+  const o = {};
+  o.nextState = () => allGameStates.playersTurn;
+  o.handleInput = () => {};
+  o.render = () => {
+    board.render(ctx);
+  };
+  return o;
+}());
+
+/* harmony default export */ __webpack_exports__["default"] = (allGameStates);
+
+
+/***/ }),
+
+/***/ "./src/global.js":
+/*!***********************!*\
+  !*** ./src/global.js ***!
+  \***********************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _game__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./game */ "./src/game.js");
+/* harmony import */ var _input__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./input */ "./src/input.js");
+/* harmony import */ var _triango_board__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./triango.board */ "./src/triango.board.js");
+
+
+
+
+const global = (() => {
+  const game = new _game__WEBPACK_IMPORTED_MODULE_0__["default"]();
+  const board = new _triango_board__WEBPACK_IMPORTED_MODULE_2__["default"]();
+  const input = new _input__WEBPACK_IMPORTED_MODULE_1__["default"](game.canvas);
+  input.listen();
+  return {
+    getGame: () => game,
+    getCtx: () => game.ctx,
+    getCanvas: () => game.canvas,
+    getBoard: () => board,
+    getInput: () => input,
+  };
+})();
+
+
+/* harmony default export */ __webpack_exports__["default"] = (global);
 
 
 /***/ }),
@@ -356,16 +392,106 @@ class Input {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _triango__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./triango */ "./src/triango.js");
+/* harmony import */ var _global__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./global */ "./src/global.js");
+/* harmony import */ var _gameState_game_state__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./gameState/game.state */ "./src/gameState/game.state.js");
+
 
 
 function main() {
-  const game = _triango__WEBPACK_IMPORTED_MODULE_0__["default"].getGame();
+  const game = _global__WEBPACK_IMPORTED_MODULE_0__["default"].getGame();
+  game.changeState(_gameState_game_state__WEBPACK_IMPORTED_MODULE_1__["default"].gameStart);
   document.getElementById('triango').appendChild(game.getCanvas());
   game.run();
 }
 
 main();
+
+
+/***/ }),
+
+/***/ "./src/stateStack.js":
+/*!***************************!*\
+  !*** ./src/stateStack.js ***!
+  \***************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+// class State {
+//   constructor() {
+//     this.gameObjs = [];
+//   }
+
+// nextState() {
+//   throw 'abstract method';
+// }
+
+// handleInput() {
+//   throw 'abstract method';
+// }
+
+//   update() {
+//     this.gameObjs.forEach(obj => obj && obj.update && obj.update());
+//   }
+
+//   render() {
+//     this.gameObjs.forEach(obj => obj && obj.render && obj.render(this.ctx));
+//   }
+// }
+
+class StateStack {
+  constructor() {
+    this.states = [];
+    this.top = 0;
+  }
+
+  pop() {
+    if (this.top < 1) {
+      return undefined;
+    }
+    return this.states[--this.top]; // eslint-disable-line
+  }
+
+  /** @param {State} state */
+  push(state) {
+    this.states[this.top++] = state; // eslint-disable-line
+  }
+
+  peek() {
+    if (this.top > 0) {
+      return this.states[this.top - 1];
+    }
+    return undefined;
+  }
+
+  length() {
+    return this.top;
+  }
+
+  clear() {
+    delete this.states;
+    this.states = [];
+    this.top = 0;
+  }
+
+  handleInput() {
+    const topState = this.peek();
+    return topState && topState.handleInput && topState.handleInput();
+  }
+
+  update() {
+    const topState = this.peek();
+    return topState && topState.update && topState.update();
+  }
+
+  render() {
+    const topState = this.peek();
+    return topState && topState.render && topState.render();
+  }
+}
+
+/* harmony default export */ __webpack_exports__["default"] = (StateStack);
 
 
 /***/ }),
@@ -405,9 +531,7 @@ class Triangle {
     }
   }
 
-  /**
-   * @param {CanvasRenderingContext2D} ctx
-   */
+  /** @param {CanvasRenderingContext2D} ctx */
   draw(ctx) {
     ctx.beginPath();
     ctx.moveTo(this.x1, this.y1);
@@ -418,7 +542,7 @@ class Triangle {
     ctx.fill();
   }
 
-  pointCheck(x, y) {
+  mouseCheck(x, y) {
     if (x < this.x1 || x > this.x2) {
       return false;
     }
@@ -476,205 +600,6 @@ class TriangoBoard {
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (TriangoBoard);
-
-
-/***/ }),
-
-/***/ "./src/triango.js":
-/*!************************!*\
-  !*** ./src/triango.js ***!
-  \************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _game_state__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./game.state */ "./src/game.state.js");
-/* harmony import */ var _game__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./game */ "./src/game.js");
-/* harmony import */ var _triango_board__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./triango.board */ "./src/triango.board.js");
-
-
-
-/* eslint-disable*/
-// ///////////////////////////////////////
-/**
- * 游戏开始（设置）界面
- * class GameStart : State
- */
-// ///////////////////////////////////////
-class GameStart extends _game_state__WEBPACK_IMPORTED_MODULE_0__["State"] {
-  constructor() {
-    super();
-  }
-
-  nextState() {
-    getGame().changeState(getAllGameState().playersTurn);
-  }
-
-  handleInput() {
-
-  }
-
-  update() {
-    super.update();
-  }
-
-  render() {
-    const {
-      ctx,
-    } = this.game;
-    ctx.fillStyle = 'black';
-    ctx.fillText('helloWorld!', 50, 50);
-    super.render();
-  }
-}
-
-// ///////////////////////////////////////
-/**
- * 游戏结束界面
- * class GameEnd : State
- */
-// ///////////////////////////////////////
-class GameEnd extends _game_state__WEBPACK_IMPORTED_MODULE_0__["State"] {
-  constructor() {
-    super();
-  }
-
-  nextState() {
-    getGame().changeState(getAllGameState().gameStart);
-  }
-
-  handleInput() {
-
-  }
-
-  update() {
-
-  }
-}
-
-// ///////////////////////////////////////
-/**
- * 游戏中
- * class InGame : State
- */
-// ///////////////////////////////////////
-class InGame extends _game_state__WEBPACK_IMPORTED_MODULE_0__["State"] {
-  constructor() {
-    super();
-    this.board = new _triango_board__WEBPACK_IMPORTED_MODULE_2__["default"]();
-  }
-
-  render() {
-    this.board.render(getCtx());
-    super.render();
-  }
-}
-
-// ///////////////////////////////////////
-/**
- * 轮到玩家的回合
- * class PlayersTurn : InGame
- */
-// ///////////////////////////////////////
-class PlayersTurn extends InGame {
-  constructor() {
-    super();
-  }
-
-  nextState() {
-    getGame().changeState(getAllGameState().aIsTurn);
-  }
-
-  handleInput() {
-
-  }
-
-  update() {
-
-  }
-}
-
-// ///////////////////////////////////////
-/**
- * 轮到轮到AI的回合
- * class AIsTurn : InGame
- */
-// ///////////////////////////////////////
-class AIsTurn extends InGame {
-  constructor() {
-    super();
-  }
-
-  nextState() {
-    getGame().changeState(getAllGameState().playersTurn);
-  }
-
-  handleInput() {
-
-  }
-
-  update() {
-
-  }
-}
-/* eslint-enable */
-
-// ///////////////////////////////////////
-/**
- * 全局对象 triango ,
- * 用于获取游戏以及游戏状态的单例
- */
-// ///////////////////////////////////////
-// eslint-disable-next-line func-names
-const triango = (function () {
-  const game = new _game__WEBPACK_IMPORTED_MODULE_1__["default"]();
-
-  const allGameState = {
-    gameStart: new GameStart(),
-    gameEnd: new GameEnd(),
-    playersTurn: new PlayersTurn(),
-    aIsTurn: new AIsTurn(),
-  };
-
-  // game.changeState(allGameState.gameStart);
-  game.changeState(allGameState.playersTurn);
-
-  return {
-    getGame: () => game,
-    allGameState,
-  };
-}());
-
-function getGame() {
-  return triango.getGame();
-}
-
-function getCtx() {
-  return triango.getGame().ctx;
-}
-
-// function getCanvas() {
-//   return triango.getGame().canvas;
-// }
-
-function getAllGameState() {
-  return triango.allGameState();
-}
-
-// /**
-//  * 从一个简易对象池中获取游戏状态对象
-//  * @param {string} WhatState 游戏状态的类型（使用字符串）
-//  * @returns {State} 返回一个游戏状态对象
-//  */
-// function createGameState(WhatState) {
-//   if (typeof (WhatState) !== 'string') {
-//     throw new Error('参数必须为字符串');
-//   }
-//   return triango.allGameState[WhatState];
-// }
-
-/* harmony default export */ __webpack_exports__["default"] = (triango);
 
 
 /***/ })

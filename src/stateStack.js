@@ -1,24 +1,24 @@
-class State {
-  constructor() {
-    this.gameObjs = [];
-  }
+// class State {
+//   constructor() {
+//     this.gameObjs = [];
+//   }
 
-  // nextState() {
-  //   throw 'abstract method';
-  // }
+// nextState() {
+//   throw 'abstract method';
+// }
 
-  // handleInput() {
-  //   throw 'abstract method';
-  // }
+// handleInput() {
+//   throw 'abstract method';
+// }
 
-  update() {
-    this.gameObjs.forEach(obj => obj && obj.update && obj.update());
-  }
+//   update() {
+//     this.gameObjs.forEach(obj => obj && obj.update && obj.update());
+//   }
 
-  render() {
-    this.gameObjs.forEach(obj => obj && obj.render && obj.render(this.ctx));
-  }
-}
+//   render() {
+//     this.gameObjs.forEach(obj => obj && obj.render && obj.render(this.ctx));
+//   }
+// }
 
 class StateStack {
   constructor() {
@@ -71,7 +71,4 @@ class StateStack {
   }
 }
 
-export {
-  State,
-  StateStack,
-};
+export default StateStack;

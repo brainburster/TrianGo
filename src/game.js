@@ -1,7 +1,4 @@
-import Input from './input';
-import {
-  StateStack,
-} from './game.state';
+import StateStack from './stateStack';
 
 class Game {
   constructor() {
@@ -10,8 +7,6 @@ class Game {
     this.canvas.height = 600;
     this.ctx = this.canvas.getContext('2d');
     this.ms_update_delay = 16;
-    this.input = new Input(this.canvas);
-    this.input.listen();
     this.state_stack = new StateStack();
   }
 
