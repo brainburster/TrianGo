@@ -1,21 +1,10 @@
 /* eslint-disable no-bitwise */
-import TriangleChecker from './triangleChecker';
+import {
+  PieceState,
+  TriangleChecker as TriChecker,
+} from './triangleChecker';
 
 const cos30 = 0.866;
-
-/**
- * Enum for piece state
- * @readonly
- * @enum {number}
- */
-const PieceState = {
-  void: -1,
-  blank: 0,
-  black: 1,
-  white: 2,
-  ban: 3,
-  ko: 4,
-};
 
 class TriangoBoard {
   constructor() {
@@ -24,14 +13,29 @@ class TriangoBoard {
     this.white = new Uint16Array(8); // 白棋
     this.ban = new Uint16Array(8); // 禁入点
     this.ko = new Uint16Array(8); // 劫
-    this.triangleCheckers = [];
+    /** @type {TriChecker[]} */
+    this.triCheckers = [];
     let up = true;
-    const r = 25;
-    const offsetX = 180;
-    const offsetY = 120;
+    const r = 20;
+    const offsetX = 45;
+    const offsetY = 420;
     for (let j = 0; j < 8; j += 1) {
       for (let i = 0; i < 16; i += 1) {
-        this.triangleCheckers.push(new TriangleChecker(offsetX + i * r * cos30 - j * r * cos30, offsetY + j * r * 1.5, r, up, 'white'));
+        const triChecker = new TriChecker(offsetX + i * r * cos30 + j * r * cos30,
+          offsetY - (1 + j) * r * 1.5, r, up, {
+            x: i,
+            y: j,
+          }, (checker) => {
+            const color = PieceState.black;
+            const {
+              x,
+              y,
+            } = checker.coordinate;
+            // console.log(x, y);
+            this.setData(x, y, color);
+            return color;
+          });
+        this.triCheckers.push(triChecker);
         up = !up;
       }
     }
@@ -39,17 +43,15 @@ class TriangoBoard {
 
   /**
    * 通过棋盘坐标获得数据
-   * @param {number} x △▽ 的 x坐标 0~7
-   * @param {number} y △▽ 的 y坐标 0~7
-   * @param {boolean} up ture:获得△的状态,false：获得▽的状态
+   * @param {number} x △ 的 x坐标 0~15
+   * @param {number} y △ 的 y坐标 0~7
    * @returns {number} 返回一个棋子状态的“枚举值”
    */
-  getData(x, y, up) {
-    if (x < 0 || x > 7 || y < 0 || y > 7) {
+  getData(x, y) {
+    if (x < 0 || x > 15 || y < 0 || y > 7) {
       return PieceState.void;
     }
-    const z = up ? 0 : 1;
-    const flag = 1 << (x * 2 + z);
+    const flag = 1 << x;
     if (this.black[y] & flag) {
       return PieceState.black;
     }
@@ -67,17 +69,15 @@ class TriangoBoard {
 
   /**
    * 通过棋盘坐标设置数据
-   * @param {number} x △▽ 的 x坐标 0~7
-   * @param {number} y △▽ 的 y坐标 0~7
-   * @param {boolean} up ture:设置△的状态,false：设置▽的状态
+   * @param {number} x △ 的 x坐标 0~15
+   * @param {number} y △ 的 y坐标 0~7
    * @param {PieceState} data 棋子的状态 {PieceState}
    */
-  setData(x, y, up, data) {
-    if (x < 0 || x > 7 || y < 0 || y > 7) {
+  setData(x, y, data) {
+    if (x < 0 || x > 15 || y < 0 || y > 7) {
       return;
     }
-    const z = up ? 0 : 1;
-    const flag = 1 << (x * 2 + z);
+    const flag = 1 << x;
 
     this.black[y] &= ~flag;
     this.white[y] &= ~flag;
@@ -100,23 +100,35 @@ class TriangoBoard {
       default:
         break;
     }
+    this.updateAllCheckers();
+  }
+
+  updateAllCheckers() {
+    this.triCheckers.forEach((triChecker) => {
+      const {
+        x,
+        y,
+      } = triChecker.coordinate;
+      const data = this.getData(x, y);
+      triChecker.setData(data);
+    });
   }
 
   update() {
-    this.triangleCheckers.forEach((triangleChecer) => {
-      triangleChecer.update();
+    this.triCheckers.forEach((triChecker) => {
+      triChecker.update();
     });
   }
 
   render() {
-    this.triangleCheckers.forEach((triangleChecer) => {
-      triangleChecer.render();
+    this.triCheckers.forEach((triChecker) => {
+      triChecker.render();
     });
   }
 
   handleInput() {
-    this.triangleCheckers.forEach((triangleChecer) => {
-      triangleChecer.handleInput();
+    this.triCheckers.forEach((triChecker) => {
+      triChecker.handleInput();
     });
   }
 }

@@ -42,7 +42,7 @@ allGameStates.gameEnd = (function GameEnd() {
   return o;
 }());
 const game = global.getGame();
-game.triangoBoard = new TriangoBoard();
+const triangoBoard = new TriangoBoard();
 
 // ///////////////////////////////////////
 /**
@@ -54,10 +54,10 @@ allGameStates.playersTurn = (function PlayersTurn() {
   const o = {};
   o.nextState = () => allGameStates.aisTurn;
   o.handleInput = () => {
-    game.triangoBoard.handleInput();
+    triangoBoard.handleInput();
   };
   o.render = () => {
-    game.triangoBoard.render(ctx);
+    triangoBoard.render(ctx);
   };
   return o;
 }());

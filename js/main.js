@@ -217,7 +217,7 @@ allGameStates.gameEnd = (function GameEnd() {
   return o;
 }());
 const game = _global__WEBPACK_IMPORTED_MODULE_0__["default"].getGame();
-game.triangoBoard = new _triangoBoard__WEBPACK_IMPORTED_MODULE_1__["default"]();
+const triangoBoard = new _triangoBoard__WEBPACK_IMPORTED_MODULE_1__["default"]();
 
 // ///////////////////////////////////////
 /**
@@ -229,10 +229,10 @@ allGameStates.playersTurn = (function PlayersTurn() {
   const o = {};
   o.nextState = () => allGameStates.aisTurn;
   o.handleInput = () => {
-    game.triangoBoard.handleInput();
+    triangoBoard.handleInput();
   };
   o.render = () => {
-    game.triangoBoard.render(ctx);
+    triangoBoard.render(ctx);
   };
   return o;
 }());
@@ -587,11 +587,13 @@ class Triangle {
 /*!********************************!*\
   !*** ./src/triangleChecker.js ***!
   \********************************/
-/*! exports provided: default */
+/*! exports provided: PieceState, TriangleChecker */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "PieceState", function() { return PieceState; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "TriangleChecker", function() { return TriangleChecker; });
 /* harmony import */ var _triangle__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./triangle */ "./src/triangle.js");
 /* harmony import */ var _global__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./global */ "./src/global.js");
 
@@ -600,61 +602,143 @@ __webpack_require__.r(__webpack_exports__);
 const ctx = _global__WEBPACK_IMPORTED_MODULE_1__["default"].getCtx();
 const input = _global__WEBPACK_IMPORTED_MODULE_1__["default"].getInput();
 
+/**
+ * Enum for piece state
+ * @readonly
+ * @enum {number}
+ */
+const PieceState = {
+  void: -1,
+  blank: 0,
+  black: 1,
+  white: 2,
+  ban: 3,
+  ko: 4,
+};
+
+/**
+ * All checker state object
+ * @readonly
+ */
 const CheckerState = {
   normal: {
-    onStart: (tribtn) => {
-      tribtn.setColor('white');
+    /**
+     * @fanction
+     * @param {TriangleChecker} checker
+     */
+    onStart: (checker) => {
+      let szColor = 'gray';
+      switch (checker.data) {
+        case PieceState.black:
+          szColor = 'black';
+          break;
+        case PieceState.white:
+          szColor = 'white';
+          break;
+        case PieceState.blank:
+          szColor = 'gray';
+          break;
+        case PieceState.ban:
+          szColor = 'green';
+          break;
+        case PieceState.ko:
+          szColor = 'purple';
+          break;
+        default:
+          szColor = 'blue';
+          break;
+      }
+      checker.setColor(szColor);
     },
-    handleInput: (tribtn) => {
+    handleInput: (checker) => {
       const x = input.mouseX;
       const y = input.mouseY;
-      if (!tribtn.triangle.mouseCheck(x, y)) {
+      if (checker.data !== PieceState.blank) {
+        return;
+      }
+      if (!checker.triangle.mouseCheck(x, y)) {
         return;
       }
       if (input.lBtnDown) {
-        tribtn.changeState(CheckerState.active);
+        checker.changeState(CheckerState.active);
       } else {
-        tribtn.changeState(CheckerState.hover);
+        checker.changeState(CheckerState.hover);
       }
     },
   },
   hover: {
-    onStart: (tribtn) => {
-      tribtn.setColor('yellow');
+    /**
+     * @fanction
+     * @param {TriangleChecker} checker
+     */
+    onStart: (checker) => {
+      checker.setColor('yellow');
     },
-    handleInput: (tribtn) => {
+    handleInput: (checker) => {
       const x = input.mouseX;
       const y = input.mouseY;
       if (input.lBtnDown) {
-        tribtn.changeState(CheckerState.active);
-      } else if (!tribtn.triangle.mouseCheck(x, y)) {
-        tribtn.changeState(CheckerState.normal);
+        checker.changeState(CheckerState.active);
+      } else if (!checker.triangle.mouseCheck(x, y)) {
+        checker.changeState(CheckerState.normal);
       }
     },
   },
   active: {
-    onStart: (tribtn) => {
-      tribtn.setColor('red');
+    onStart: (checker) => {
+      checker.setColor('red');
+      const data = checker.onactive(checker);
+      checker.setData(data);
     },
-    handleInput: (tribtn) => {
+    handleInput: (checker) => {
       const x = input.mouseX;
       const y = input.mouseY;
-      if (!tribtn.triangle.mouseCheck(x, y)) {
-        tribtn.changeState(CheckerState.normal);
+      if (!checker.triangle.mouseCheck(x, y)) {
+        checker.changeState(CheckerState.normal);
         return;
       }
       if (!input.lBtnDown) {
-        tribtn.changeState(CheckerState.hover);
+        // checker.changeState(CheckerState.hover);
+        checker.changeState(CheckerState.normal);
       }
     },
   },
 };
 
+/**
+ * 点击后发生的行为
+ * @callback OnActive
+ * @param {TriangleChecker} checker
+ * @returns {pieceState}
+ */
+
 class TriangleChecker {
-  constructor(x, y, r, up, color) {
-    this.triangle = new _triangle__WEBPACK_IMPORTED_MODULE_0__["default"](x, y, r, up, color);
+  /**
+   *
+   * @param {number} x
+   * @param {number} y
+   * @param {number} r
+   * @param {boolean} up
+   * @param {{x:number,y:number}} coordinate
+   * @param {OnActive} onactive
+   */
+  constructor(x, y, r, up, coordinate, onactive) {
+    this.triangle = new _triangle__WEBPACK_IMPORTED_MODULE_0__["default"](x, y, r, up);
+    this.coordinate = coordinate;
+    this.data = PieceState.blank;
     this.state = CheckerState.normal;
     this.state.onStart(this);
+    this.onactive = onactive;
+  }
+
+  /**
+   * 设置该棋盘格上的棋子数据
+   * set piece state of this checker
+   * @param {PieceState} pieceState
+   * @example setData(PieceState.blank|PieceState.white|PieceState.black)
+   */
+  setData(pieceState) {
+    this.data = pieceState;
   }
 
   setColor(color) {
@@ -668,19 +752,19 @@ class TriangleChecker {
 
   render() {
     this.triangle.draw(ctx);
-    // return this.state && this.state.draw && this.state.draw(this);
   }
 
   handleInput() {
-    return this.state && this.state.handleInput && this.state.handleInput(this);
+    this.state.handleInput(this);
   }
 
   update() {
-    return this.state && this.state.update && this.state.update(this);
+    // eslint-disable-next-line no-unused-expressions
+    this.state.update && this.state.update(this);
   }
 }
 
-/* harmony default export */ __webpack_exports__["default"] = (TriangleChecker);
+
 
 
 /***/ }),
@@ -700,20 +784,6 @@ __webpack_require__.r(__webpack_exports__);
 
 const cos30 = 0.866;
 
-/**
- * Enum for piece state
- * @readonly
- * @enum {number}
- */
-const PieceState = {
-  void: -1,
-  blank: 0,
-  black: 1,
-  white: 2,
-  ban: 3,
-  ko: 4,
-};
-
 class TriangoBoard {
   constructor() {
     // 棋盘数据，棋盘大小8x2x8, 数据大小 16*8*4 bit
@@ -721,14 +791,29 @@ class TriangoBoard {
     this.white = new Uint16Array(8); // 白棋
     this.ban = new Uint16Array(8); // 禁入点
     this.ko = new Uint16Array(8); // 劫
-    this.triangleCheckers = [];
+    /** @type {TriChecker[]} */
+    this.triCheckers = [];
     let up = true;
-    const r = 25;
-    const offsetX = 180;
-    const offsetY = 120;
+    const r = 20;
+    const offsetX = 45;
+    const offsetY = 420;
     for (let j = 0; j < 8; j += 1) {
       for (let i = 0; i < 16; i += 1) {
-        this.triangleCheckers.push(new _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["default"](offsetX + i * r * cos30 - j * r * cos30, offsetY + j * r * 1.5, r, up, 'white'));
+        const triChecker = new _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["TriangleChecker"](offsetX + i * r * cos30 + j * r * cos30,
+          offsetY - (1 + j) * r * 1.5, r, up, {
+            x: i,
+            y: j,
+          }, (checker) => {
+            const color = _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].black;
+            const {
+              x,
+              y,
+            } = checker.coordinate;
+            // console.log(x, y);
+            this.setData(x, y, color);
+            return color;
+          });
+        this.triCheckers.push(triChecker);
         up = !up;
       }
     }
@@ -736,45 +821,41 @@ class TriangoBoard {
 
   /**
    * 通过棋盘坐标获得数据
-   * @param {number} x △▽ 的 x坐标 0~7
-   * @param {number} y △▽ 的 y坐标 0~7
-   * @param {boolean} up ture:获得△的状态,false：获得▽的状态
+   * @param {number} x △ 的 x坐标 0~15
+   * @param {number} y △ 的 y坐标 0~7
    * @returns {number} 返回一个棋子状态的“枚举值”
    */
-  getData(x, y, up) {
-    if (x < 0 || x > 7 || y < 0 || y > 7) {
-      return PieceState.void;
+  getData(x, y) {
+    if (x < 0 || x > 15 || y < 0 || y > 7) {
+      return _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].void;
     }
-    const z = up ? 0 : 1;
-    const flag = 1 << (x * 2 + z);
+    const flag = 1 << x;
     if (this.black[y] & flag) {
-      return PieceState.black;
+      return _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].black;
     }
     if (this.white[y] & flag) {
-      return PieceState.white;
+      return _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].white;
     }
     if (this.ban[y] & flag) {
-      return PieceState.ban;
+      return _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].ban;
     }
     if (this.ko[y] & flag) {
-      return PieceState.ko;
+      return _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].ko;
     }
-    return PieceState.blank;
+    return _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].blank;
   }
 
   /**
    * 通过棋盘坐标设置数据
-   * @param {number} x △▽ 的 x坐标 0~7
-   * @param {number} y △▽ 的 y坐标 0~7
-   * @param {boolean} up ture:设置△的状态,false：设置▽的状态
+   * @param {number} x △ 的 x坐标 0~15
+   * @param {number} y △ 的 y坐标 0~7
    * @param {PieceState} data 棋子的状态 {PieceState}
    */
-  setData(x, y, up, data) {
-    if (x < 0 || x > 7 || y < 0 || y > 7) {
+  setData(x, y, data) {
+    if (x < 0 || x > 15 || y < 0 || y > 7) {
       return;
     }
-    const z = up ? 0 : 1;
-    const flag = 1 << (x * 2 + z);
+    const flag = 1 << x;
 
     this.black[y] &= ~flag;
     this.white[y] &= ~flag;
@@ -782,38 +863,50 @@ class TriangoBoard {
     this.ko[y] &= ~flag;
 
     switch (data) {
-      case PieceState.black:
+      case _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].black:
         this.black[y] |= flag;
         break;
-      case PieceState.white:
+      case _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].white:
         this.white[y] |= flag;
         break;
-      case PieceState.ban:
+      case _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].ban:
         this.ban[y] |= flag;
         break;
-      case PieceState.ko:
+      case _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].ko:
         this.ko[y] |= flag;
         break;
       default:
         break;
     }
+    this.updateAllCheckers();
+  }
+
+  updateAllCheckers() {
+    this.triCheckers.forEach((triChecker) => {
+      const {
+        x,
+        y,
+      } = triChecker.coordinate;
+      const data = this.getData(x, y);
+      triChecker.setData(data);
+    });
   }
 
   update() {
-    this.triangleCheckers.forEach((triangleChecer) => {
-      triangleChecer.update();
+    this.triCheckers.forEach((triChecker) => {
+      triChecker.update();
     });
   }
 
   render() {
-    this.triangleCheckers.forEach((triangleChecer) => {
-      triangleChecer.render();
+    this.triCheckers.forEach((triChecker) => {
+      triChecker.render();
     });
   }
 
   handleInput() {
-    this.triangleCheckers.forEach((triangleChecer) => {
-      triangleChecer.handleInput();
+    this.triCheckers.forEach((triChecker) => {
+      triChecker.handleInput();
     });
   }
 }
