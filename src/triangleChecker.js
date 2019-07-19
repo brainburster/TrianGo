@@ -7,7 +7,7 @@ const input = global.getInput();
 const CheckerState = {
   normal: {
     onStart: (tribtn) => {
-      tribtn.setColor('black');
+      tribtn.setColor('white');
     },
     handleInput: (tribtn) => {
       const x = input.mouseX;
@@ -58,6 +58,7 @@ class TriangleChecker {
   constructor(x, y, r, up, color) {
     this.triangle = new Triangle(x, y, r, up, color);
     this.state = CheckerState.normal;
+    this.state.onStart(this);
   }
 
   setColor(color) {

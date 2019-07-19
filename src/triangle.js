@@ -3,7 +3,7 @@ const tan60 = radical3;
 const cos30 = radical3 / 2;
 
 class Triangle {
-  constructor(x, y, r, up = true, color = 'black') {
+  constructor(x, y, r, up = true, color = 'white') {
     this.x = x;
     this.y = y;
     this.r = r;
@@ -20,7 +20,9 @@ class Triangle {
     this.x3 = this.x + this.r * cos30;
     this.y3 = this.y + 1.5 * this.r;
     if (this.up) {
-      this.y3 = this.y - 1.5 * this.r;
+      this.y3 = this.y;
+      this.y2 = this.y + 1.5 * this.r;
+      this.y1 = this.y + 1.5 * this.r;
     }
   }
 
@@ -33,6 +35,8 @@ class Triangle {
     ctx.fillStyle = this.color;
     ctx.closePath();
     ctx.fill();
+    ctx.strokeStyle = 'black';
+    ctx.stroke();
   }
 
   mouseCheck(x, y) {
