@@ -384,10 +384,9 @@ allGameStates.twoP = (() => {
   const o = {};
   o.nextState = () => allGameStates.twoP;
   o.handleInput = () => {
-    const status = triangoBoard.handleInput();
-    if (status) {
+    triangoBoard.handleInput(() => {
       _global__WEBPACK_IMPORTED_MODULE_0__["default"].swapColor();
-    }
+    });
   };
   o.render = () => {
     triangoBoard.render();
@@ -849,7 +848,7 @@ const CheckerState = {
         return;
       }
       if (input.lBtnDown) {
-        checker.changeState(CheckerState.active);
+        checker.changeState(CheckerState.keydown);
       } else {
         checker.changeState(CheckerState.hover);
       }
@@ -867,31 +866,36 @@ const CheckerState = {
       const x = input.mouseX;
       const y = input.mouseY;
       if (input.lBtnDown) {
-        checker.changeState(CheckerState.active);
+        checker.changeState(CheckerState.keydown);
       } else if (!checker.triangle.mouseCheck(x, y)) {
         checker.changeState(CheckerState.normal);
       }
     },
   },
-  active: {
+  keydown: {
     onStart: (checker) => {
       checker.setColor('red');
-      const data = checker.onactive(checker);
-      checker.setData(data);
     },
     handleInput: (checker) => {
       const x = input.mouseX;
       const y = input.mouseY;
       if (!checker.triangle.mouseCheck(x, y)) {
         checker.changeState(CheckerState.normal);
-        return true;
       }
       if (!input.lBtnDown) {
         // checker.changeState(CheckerState.hover);
-        checker.changeState(CheckerState.normal);
-        return true;
+        checker.changeState(CheckerState.active);
       }
-      return false;
+    },
+  },
+  active: {
+    onStart: (checker) => {
+      const data = checker.onactive(checker);
+      checker.setData(data);
+      checker.changeState(CheckerState.normal);
+    },
+    handleInput: (checker) => {
+      checker.changeState(CheckerState.normal);
     },
   },
 };
@@ -989,10 +993,12 @@ class TriangoBoard {
     const r = 20;
     const offsetX = 45;
     const offsetY = 420;
+    const gapX = 1;
+    const gapY = 1;
     for (let j = 0; j < 8; j += 1) {
       for (let i = 0; i < 16; i += 1) {
-        const triChecker = new _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["TriangleChecker"](offsetX + i * r * cos30 + j * r * cos30,
-          offsetY - (1 + j) * r * 1.5, r, up, {
+        const triChecker = new _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["TriangleChecker"](offsetX + i * (r * cos30 + gapX) + j * (r * cos30 + gapY),
+          offsetY - (1 + j) * (r * 1.5 + gapY), r, up, {
             x: i,
             y: j,
           }, (checker) => {
@@ -1095,18 +1101,18 @@ class TriangoBoard {
     });
   }
 
-  /**
-   * @returns 返回是否棋盘状态是否已改变
-   */
-  handleInput() {
-    // return this.triCheckers.some(triChecker => triChecker.handleInput());
-    let status = false;
-    this.triCheckers.forEach((triChecker) => {
-      if (triChecker.handleInput()) {
-        status = true;
-      }
-    });
-    return status;
+  handleInput(onboardchange) {
+    const olddata = {
+      black: new Int32Array(this.black),
+      white: new Int32Array(this.white),
+    };
+    this.triCheckers.forEach(triChecker => triChecker.handleInput());
+    let flag = false;
+    flag = olddata.black.some((value, index) => value !== this.black[index]);
+    flag = flag || olddata.white.some((value, index) => value !== this.white[index]);
+    if (flag) {
+      onboardchange();
+    }
   }
 }
 

@@ -73,10 +73,9 @@ allGameStates.twoP = (() => {
   const o = {};
   o.nextState = () => allGameStates.twoP;
   o.handleInput = () => {
-    const status = triangoBoard.handleInput();
-    if (status) {
+    triangoBoard.handleInput(() => {
       global.swapColor();
-    }
+    });
   };
   o.render = () => {
     triangoBoard.render();

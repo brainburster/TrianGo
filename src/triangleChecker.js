@@ -50,7 +50,7 @@ const CheckerState = {
         return;
       }
       if (input.lBtnDown) {
-        checker.changeState(CheckerState.active);
+        checker.changeState(CheckerState.keydown);
       } else {
         checker.changeState(CheckerState.hover);
       }
@@ -68,31 +68,36 @@ const CheckerState = {
       const x = input.mouseX;
       const y = input.mouseY;
       if (input.lBtnDown) {
-        checker.changeState(CheckerState.active);
+        checker.changeState(CheckerState.keydown);
       } else if (!checker.triangle.mouseCheck(x, y)) {
         checker.changeState(CheckerState.normal);
       }
     },
   },
-  active: {
+  keydown: {
     onStart: (checker) => {
       checker.setColor('red');
-      const data = checker.onactive(checker);
-      checker.setData(data);
     },
     handleInput: (checker) => {
       const x = input.mouseX;
       const y = input.mouseY;
       if (!checker.triangle.mouseCheck(x, y)) {
         checker.changeState(CheckerState.normal);
-        return true;
       }
       if (!input.lBtnDown) {
         // checker.changeState(CheckerState.hover);
-        checker.changeState(CheckerState.normal);
-        return true;
+        checker.changeState(CheckerState.active);
       }
-      return false;
+    },
+  },
+  active: {
+    onStart: (checker) => {
+      const data = checker.onactive(checker);
+      checker.setData(data);
+      checker.changeState(CheckerState.normal);
+    },
+    handleInput: (checker) => {
+      checker.changeState(CheckerState.normal);
     },
   },
 };

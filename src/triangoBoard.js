@@ -20,10 +20,12 @@ class TriangoBoard {
     const r = 20;
     const offsetX = 45;
     const offsetY = 420;
+    const gapX = 1;
+    const gapY = 1;
     for (let j = 0; j < 8; j += 1) {
       for (let i = 0; i < 16; i += 1) {
-        const triChecker = new TriChecker(offsetX + i * r * cos30 + j * r * cos30,
-          offsetY - (1 + j) * r * 1.5, r, up, {
+        const triChecker = new TriChecker(offsetX + i * (r * cos30 + gapX) + j * (r * cos30 + gapY),
+          offsetY - (1 + j) * (r * 1.5 + gapY), r, up, {
             x: i,
             y: j,
           }, (checker) => {
@@ -126,18 +128,18 @@ class TriangoBoard {
     });
   }
 
-  /**
-   * @returns 返回是否棋盘状态是否已改变
-   */
-  handleInput() {
-    // return this.triCheckers.some(triChecker => triChecker.handleInput());
-    let status = false;
-    this.triCheckers.forEach((triChecker) => {
-      if (triChecker.handleInput()) {
-        status = true;
-      }
-    });
-    return status;
+  handleInput(onboardchange) {
+    const olddata = {
+      black: new Int32Array(this.black),
+      white: new Int32Array(this.white),
+    };
+    this.triCheckers.forEach(triChecker => triChecker.handleInput());
+    let flag = false;
+    flag = olddata.black.some((value, index) => value !== this.black[index]);
+    flag = flag || olddata.white.some((value, index) => value !== this.white[index]);
+    if (flag) {
+      onboardchange();
+    }
   }
 }
 
