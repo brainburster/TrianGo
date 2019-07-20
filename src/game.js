@@ -3,7 +3,7 @@ import StateStack from './stateStack';
 class Game {
   constructor() {
     this.canvas = document.createElement('canvas');
-    this.canvas.width = 600;
+    this.canvas.width = 800;
     this.canvas.height = 600;
     this.ctx = this.canvas.getContext('2d');
     this.ms_update_delay = 16;
@@ -52,6 +52,10 @@ class Game {
 
   changeState(state) {
     this.state_stack.push(state);
+  }
+
+  getState() {
+    return this.state_stack.peek();
   }
 
   rollbackState() {

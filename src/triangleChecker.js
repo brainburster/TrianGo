@@ -3,20 +3,8 @@ import global from './global';
 
 const ctx = global.getCtx();
 const input = global.getInput();
+const PieceState = global.getAllPieceState();
 
-/**
- * Enum for piece state
- * @readonly
- * @enum {number}
- */
-const PieceState = {
-  void: -1,
-  blank: 0,
-  black: 1,
-  white: 2,
-  ban: 3,
-  ko: 4,
-};
 
 /**
  * All checker state object
@@ -97,12 +85,14 @@ const CheckerState = {
       const y = input.mouseY;
       if (!checker.triangle.mouseCheck(x, y)) {
         checker.changeState(CheckerState.normal);
-        return;
+        return true;
       }
       if (!input.lBtnDown) {
         // checker.changeState(CheckerState.hover);
         checker.changeState(CheckerState.normal);
+        return true;
       }
+      return false;
     },
   },
 };
@@ -153,16 +143,15 @@ class TriangleChecker {
   }
 
   render() {
-    this.triangle.draw(ctx);
+    return this.triangle.draw && this.triangle.draw(ctx);
   }
 
   handleInput() {
-    this.state.handleInput(this);
+    return this.state.handleInput && this.state.handleInput(this);
   }
 
   update() {
-    // eslint-disable-next-line no-unused-expressions
-    this.state.update && this.state.update(this);
+    return this.state.update && this.state.update(this);
   }
 }
 

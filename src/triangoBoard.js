@@ -3,6 +3,7 @@ import {
   PieceState,
   TriangleChecker as TriChecker,
 } from './triangleChecker';
+import global from './global';
 
 const cos30 = 0.866;
 
@@ -26,12 +27,11 @@ class TriangoBoard {
             x: i,
             y: j,
           }, (checker) => {
-            const color = PieceState.black;
+            const color = global.getAllPieceState().playerColor;
             const {
               x,
               y,
             } = checker.coordinate;
-            // console.log(x, y);
             this.setData(x, y, color);
             return color;
           });
@@ -126,11 +126,21 @@ class TriangoBoard {
     });
   }
 
+  /**
+   * @returns 返回是否棋盘状态是否已改变
+   */
   handleInput() {
+    // return this.triCheckers.some(triChecker => triChecker.handleInput());
+    let status = false;
     this.triCheckers.forEach((triChecker) => {
-      triChecker.handleInput();
+      if (triChecker.handleInput()) {
+        status = true;
+      }
     });
+    return status;
   }
 }
+
+TriangoBoard.instance = new TriangoBoard();
 
 export default TriangoBoard;

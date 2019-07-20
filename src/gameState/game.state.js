@@ -1,9 +1,20 @@
 import global from '../global';
+import CanvasButton from '../canvasButton';
 import TriangoBoard from '../triangoBoard';
 
+
+const game = global.getGame();
+const input = global.getInput();
+const ctx = global.getCtx();
+const triangoBoard = TriangoBoard.instance;
+
+/**
+ * 所有游戏状态
+ */
 const allGameStates = {
   gameStart: null,
   gameEnd: null,
+  twoP: null,
   playersTurn: null,
   aisTurn: null,
 };
@@ -14,13 +25,25 @@ const allGameStates = {
  */
 // ///////////////////////////////////////
 allGameStates.gameStart = (function GameStart() {
-  const ctx = global.getCtx();
   const o = {};
-  o.nextState = () => allGameStates.playersTurn;
-  o.handleInput = () => {};
+  const btn1 = new CanvasButton(100, 100, 50, 50, 20, '2p', () => {
+    game.changeState(allGameStates.twoP);
+  });
+  const btn2 = new CanvasButton(200, 100, 50, 50, 20, 'AI', () => {
+    game.changeState(allGameStates.playersTurn);
+  });
+  o.handleInput = () => {
+    const x = input.mouseX;
+    const y = input.mouseY;
+    const lbtndown = input.lBtnDown;
+    btn1.handleInput(x, y, lbtndown);
+    btn2.handleInput(x, y, lbtndown);
+  };
   o.render = () => {
+    btn1.render(ctx);
+    btn2.render(ctx);
     ctx.fillStyle = 'black';
-    ctx.fillText('gameStart!', 50, 50);
+    ctx.fillText('gameStart!', 160, 50);
   };
   return o;
 }());
@@ -31,7 +54,6 @@ allGameStates.gameStart = (function GameStart() {
  */
 // ///////////////////////////////////////
 allGameStates.gameEnd = (function GameEnd() {
-  const ctx = global.getCtx();
   const o = {};
   o.nextState = () => allGameStates.gameStart;
   o.handleInput = () => {};
@@ -41,8 +63,27 @@ allGameStates.gameEnd = (function GameEnd() {
   };
   return o;
 }());
-const game = global.getGame();
-const triangoBoard = new TriangoBoard();
+
+// ///////////////////////////////////////
+/**
+ * 2个人轮流下棋
+ */
+// ///////////////////////////////////////
+allGameStates.twoP = (() => {
+  const o = {};
+  o.nextState = () => allGameStates.twoP;
+  o.handleInput = () => {
+    const status = triangoBoard.handleInput();
+    if (status) {
+      global.swapColor();
+    }
+  };
+  o.render = () => {
+    triangoBoard.render();
+  };
+  return o;
+})();
+
 
 // ///////////////////////////////////////
 /**
@@ -50,14 +91,13 @@ const triangoBoard = new TriangoBoard();
  */
 // ///////////////////////////////////////
 allGameStates.playersTurn = (function PlayersTurn() {
-  const ctx = global.getCtx();
   const o = {};
   o.nextState = () => allGameStates.aisTurn;
   o.handleInput = () => {
     triangoBoard.handleInput();
   };
   o.render = () => {
-    triangoBoard.render(ctx);
+    triangoBoard.render();
   };
   return o;
 }());
@@ -69,14 +109,13 @@ allGameStates.playersTurn = (function PlayersTurn() {
  */
 // ///////////////////////////////////////
 allGameStates.aisTurn = (function AIsTurn() {
-  const ctx = global.getCtx();
   const o = {};
   o.nextState = () => allGameStates.playersTurn;
   o.handleInput = () => {
-    game.triangoBoard.handleInput();
+    // triangoBoard.handleInput();
   };
   o.render = () => {
-    game.triangoBoard.render(ctx);
+    triangoBoard.render();
   };
   return o;
 }());
