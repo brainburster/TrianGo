@@ -40,6 +40,9 @@ const CheckerState = {
       }
       checker.setColor(szColor);
     },
+    update: (checker) => {
+      CheckerState.normal.onStart(checker);
+    },
     handleInput: (checker) => {
       const x = input.mouseX;
       const y = input.mouseY;
@@ -92,9 +95,7 @@ const CheckerState = {
   },
   active: {
     onStart: (checker) => {
-      const data = checker.onactive(checker);
-      checker.setData(data);
-      checker.changeState(CheckerState.normal);
+      checker.onactive(checker);
     },
     handleInput: (checker) => {
       checker.changeState(CheckerState.normal);

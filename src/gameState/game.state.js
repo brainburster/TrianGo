@@ -77,6 +77,9 @@ allGameStates.twoP = (() => {
       global.swapColor();
     });
   };
+  o.update = () => {
+    triangoBoard.update();
+  };
   o.render = () => {
     triangoBoard.render();
   };
@@ -95,6 +98,9 @@ allGameStates.playersTurn = (function PlayersTurn() {
   o.handleInput = () => {
     triangoBoard.handleInput();
   };
+  o.update = () => {
+    triangoBoard.update();
+  };
   o.render = () => {
     triangoBoard.render();
   };
@@ -112,6 +118,9 @@ allGameStates.aisTurn = (function AIsTurn() {
   o.nextState = () => allGameStates.playersTurn;
   o.handleInput = () => {
     // triangoBoard.handleInput();
+  };
+  o.update = () => {
+    triangoBoard.update();
   };
   o.render = () => {
     triangoBoard.render();
