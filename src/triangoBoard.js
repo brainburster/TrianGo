@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 /* eslint-disable no-bitwise */
 import {
   PieceState,
@@ -6,6 +7,53 @@ import {
 import global from './global';
 
 const cos30 = 0.866;
+
+class History {
+  constructor(board) {
+    this.data = [];
+    this.current = -1;
+    this.push(board);
+  }
+
+  push(board) {
+    this.data.length = this.current + 1;
+    this.data.push({
+      black: board.black,
+      white: board.white,
+      ban: board.ban,
+      ko: board.ko,
+    });
+    this.current += 1;
+  }
+
+  undo(board) {
+    this.current -= 1;
+    if (this.current === -1) {
+      this.current = 0;
+      return false;
+    }
+    const backup = this.data[this.current];
+    board.black = backup.black;
+    board.white = backup.white;
+    board.ko = backup.ko;
+    board.ban = backup.ban;
+    return true;
+  }
+
+  redo(board) {
+    this.current += 1;
+    if (this.current === this.data.length) {
+      this.current = this.data.length - 1;
+      return false;
+    }
+    const backup = this.data[this.current];
+    board.black = backup.black;
+    board.white = backup.white;
+    board.ko = backup.ko;
+    board.ban = backup.ban;
+    return true;
+  }
+}
 
 class OpenList {
   constructor() {
@@ -90,10 +138,10 @@ class TriangoBoard {
       this.adjacencylist.push([]);
     }
     let up = true;
-    const r = 20;
-    const offsetX = 45;
-    const offsetY = 420;
-    const gapX = 1;
+    const r = 60;
+    const offsetX = 90;
+    const offsetY = 520;
+    const gapX = 1 / cos30;
     const gapY = 1;
     for (let j = 0; j < 4; j += 1) {
       for (let i = 0; i < 8; i += 1) {
@@ -139,6 +187,15 @@ class TriangoBoard {
       }
     }
     this.updateAllCheckers();
+    this.history = new History(this);
+  }
+
+  undo() {
+    return this.history.undo(this);
+  }
+
+  redo() {
+    return this.history.redo(this);
   }
 
   /**
@@ -151,7 +208,7 @@ class TriangoBoard {
     if (x < 0 || x > 7 || y < 0 || y > 3) {
       return PieceState.void;
     }
-    const flag = 1 << (x + y * 8);
+    const flag = 1 << (x | (y << 3));
     if (this.black & flag) {
       return PieceState.black;
     }
@@ -177,7 +234,7 @@ class TriangoBoard {
     if (x < 0 || x > 7 || y < 0 || y > 3) {
       return;
     }
-    const flag = 1 << (x + y * 8);
+    const flag = 1 << (x | (y << 3));
 
     this.black &= ~flag;
     this.white &= ~flag;
@@ -202,6 +259,7 @@ class TriangoBoard {
     }
     this.updateBoard(x, y);
     this.updateAllCheckers();
+    this.history.push(this);
   }
 
   updateBoard(x, y) {

@@ -331,6 +331,44 @@ const allGameStates = {
   aisTurn: null,
 };
 
+const gameScene = (() => {
+  const o = {};
+  const triBoard = _triangoBoard__WEBPACK_IMPORTED_MODULE_2__["default"].instance;
+  const btnReturn = new _canvasButton__WEBPACK_IMPORTED_MODULE_1__["default"](80, 50, 80, 50, 20, 'return', () => {
+    game.changeState(allGameStates.gameStart);
+  });
+  const btnRedo = new _canvasButton__WEBPACK_IMPORTED_MODULE_1__["default"](80, 150, 80, 50, 20, 'redo', () => {
+    if (triangoBoard.redo()) {
+      triangoBoard.updateAllCheckers();
+    }
+  });
+  const btnUndo = new _canvasButton__WEBPACK_IMPORTED_MODULE_1__["default"](80, 250, 80, 50, 20, 'Undo', () => {
+    if (triangoBoard.undo()) {
+      triangoBoard.updateAllCheckers();
+    }
+  });
+  o.handleInput = (callback) => {
+    const x = input.mouseX;
+    const y = input.mouseY;
+    const lbtndown = input.lBtnDown;
+    btnReturn.handleInput(x, y, lbtndown);
+    triBoard.handleInput(callback);
+    btnRedo.handleInput(x, y, lbtndown);
+    btnUndo.handleInput(x, y, lbtndown);
+  };
+  o.update = () => {
+    triBoard.update();
+  };
+  o.render = () => {
+    triBoard.render();
+    btnRedo.render(ctx);
+    btnUndo.render(ctx);
+    btnReturn.render(ctx);
+  };
+  return o;
+})();
+
+
 // ///////////////////////////////////////
 /**
  * 游戏开始（设置）界面
@@ -388,9 +426,6 @@ allGameStates.gameEnd = (function GameEnd() {
 // ///////////////////////////////////////
 allGameStates.debug = (() => {
   const o = {};
-  const btnReturn = new _canvasButton__WEBPACK_IMPORTED_MODULE_1__["default"](80, 50, 80, 50, 20, 'return', () => {
-    game.changeState(allGameStates.gameStart);
-  });
   const btnSwapColor = new _canvasButton__WEBPACK_IMPORTED_MODULE_1__["default"](210, 50, 80, 50, 20, 'black', () => {
     _global__WEBPACK_IMPORTED_MODULE_0__["default"].swapColor();
     btnSwapColor.text = btnSwapColor.text === 'black' ? 'white' : 'black';
@@ -404,19 +439,17 @@ allGameStates.debug = (() => {
     const x = input.mouseX;
     const y = input.mouseY;
     const lbtndown = input.lBtnDown;
-    btnReturn.handleInput(x, y, lbtndown);
     btnSwapColor.handleInput(x, y, lbtndown);
     btnClear.handleInput(x, y, lbtndown);
-    triangoBoard.handleInput();
+    gameScene.handleInput();
   };
   o.update = () => {
-    triangoBoard.update();
+    gameScene.update();
   };
   o.render = () => {
-    btnReturn.render(ctx);
     btnSwapColor.render(ctx);
     btnClear.render(ctx);
-    triangoBoard.render();
+    gameScene.render();
   };
   return o;
 })();
@@ -429,15 +462,15 @@ allGameStates.debug = (() => {
 allGameStates.twoP = (() => {
   const o = {};
   o.handleInput = () => {
-    triangoBoard.handleInput(() => {
+    gameScene.handleInput(() => {
       _global__WEBPACK_IMPORTED_MODULE_0__["default"].swapColor();
     });
   };
   o.update = () => {
-    triangoBoard.update();
+    gameScene.update();
   };
   o.render = () => {
-    triangoBoard.render();
+    gameScene.render();
   };
   return o;
 })();
@@ -450,15 +483,14 @@ allGameStates.twoP = (() => {
 // ///////////////////////////////////////
 allGameStates.playersTurn = (function PlayersTurn() {
   const o = {};
-  o.nextState = () => allGameStates.aisTurn;
   o.handleInput = () => {
-    triangoBoard.handleInput();
+    gameScene.handleInput();
   };
   o.update = () => {
-    triangoBoard.update();
+    gameScene.update();
   };
   o.render = () => {
-    triangoBoard.render();
+    gameScene.render();
   };
   return o;
 }());
@@ -471,15 +503,14 @@ allGameStates.playersTurn = (function PlayersTurn() {
 // ///////////////////////////////////////
 allGameStates.aisTurn = (function AIsTurn() {
   const o = {};
-  o.nextState = () => allGameStates.playersTurn;
   o.handleInput = () => {
-    // triangoBoard.handleInput();
+    gameScene.handleInput();
   };
   o.update = () => {
-    triangoBoard.update();
+    gameScene.update();
   };
   o.render = () => {
-    triangoBoard.render();
+    gameScene.render();
   };
   return o;
 }());
@@ -1029,11 +1060,59 @@ class TriangleChecker {
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _triangleChecker__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./triangleChecker */ "./src/triangleChecker.js");
 /* harmony import */ var _global__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./global */ "./src/global.js");
+/* eslint-disable no-param-reassign */
 /* eslint-disable no-bitwise */
 
 
 
 const cos30 = 0.866;
+
+class History {
+  constructor(board) {
+    this.data = [];
+    this.current = -1;
+    this.push(board);
+  }
+
+  push(board) {
+    this.data.length = this.current + 1;
+    this.data.push({
+      black: board.black,
+      white: board.white,
+      ban: board.ban,
+      ko: board.ko,
+    });
+    this.current += 1;
+  }
+
+  undo(board) {
+    this.current -= 1;
+    if (this.current === -1) {
+      this.current = 0;
+      return false;
+    }
+    const backup = this.data[this.current];
+    board.black = backup.black;
+    board.white = backup.white;
+    board.ko = backup.ko;
+    board.ban = backup.ban;
+    return true;
+  }
+
+  redo(board) {
+    this.current += 1;
+    if (this.current === this.data.length) {
+      this.current = this.data.length - 1;
+      return false;
+    }
+    const backup = this.data[this.current];
+    board.black = backup.black;
+    board.white = backup.white;
+    board.ko = backup.ko;
+    board.ban = backup.ban;
+    return true;
+  }
+}
 
 class OpenList {
   constructor() {
@@ -1118,10 +1197,10 @@ class TriangoBoard {
       this.adjacencylist.push([]);
     }
     let up = true;
-    const r = 20;
-    const offsetX = 45;
-    const offsetY = 420;
-    const gapX = 1;
+    const r = 60;
+    const offsetX = 90;
+    const offsetY = 520;
+    const gapX = 1 / cos30;
     const gapY = 1;
     for (let j = 0; j < 4; j += 1) {
       for (let i = 0; i < 8; i += 1) {
@@ -1167,6 +1246,15 @@ class TriangoBoard {
       }
     }
     this.updateAllCheckers();
+    this.history = new History(this);
+  }
+
+  undo() {
+    return this.history.undo(this);
+  }
+
+  redo() {
+    return this.history.redo(this);
   }
 
   /**
@@ -1179,7 +1267,7 @@ class TriangoBoard {
     if (x < 0 || x > 7 || y < 0 || y > 3) {
       return _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].void;
     }
-    const flag = 1 << (x + y * 8);
+    const flag = 1 << (x | (y << 3));
     if (this.black & flag) {
       return _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].black;
     }
@@ -1205,7 +1293,7 @@ class TriangoBoard {
     if (x < 0 || x > 7 || y < 0 || y > 3) {
       return;
     }
-    const flag = 1 << (x + y * 8);
+    const flag = 1 << (x | (y << 3));
 
     this.black &= ~flag;
     this.white &= ~flag;
@@ -1230,6 +1318,7 @@ class TriangoBoard {
     }
     this.updateBoard(x, y);
     this.updateAllCheckers();
+    this.history.push(this);
   }
 
   updateBoard(x, y) {
