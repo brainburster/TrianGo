@@ -1042,14 +1042,14 @@ class OpenList {
 
   static index2xy(index) {
     return {
-      x: index & 0b1111,
-      y: index >>> 4,
+      x: index & 0b111,
+      y: index >>> 3,
     };
   }
 
   static xy2index(xx, yy) {
-    let index = yy << 4;
-    index |= xx & 0b1111;
+    let index = yy << 3;
+    index |= xx & 0b111;
     return index;
   }
 
@@ -1105,16 +1105,16 @@ function getOppositeColor(color) {
 
 class TriangoBoard {
   constructor() {
-    // 棋盘数据，棋盘大小8x2x8, 数据大小 16*8*4 bit
-    this.black = new Uint16Array(8); // 黑棋
-    this.white = new Uint16Array(8); // 白棋
-    this.ban = new Uint16Array(8); // 禁入点
-    this.ko = new Uint16Array(8); // 劫
+    // 棋盘数据，棋盘大小4x2x4, 数据大小 32*4 bit
+    this.black = 0; // 黑棋
+    this.white = 0; // 白棋
+    this.ban = 0; // 禁入点
+    this.ko = 0; // 劫
     /** @type {TriChecker[]} */
     this.triCheckers = [];
     /** @type {{x:number,y:number}[][][]} */
     this.adjacencylist = [];
-    for (let i = 0; i < 16; i += 1) {
+    for (let i = 0; i < 8; i += 1) {
       this.adjacencylist.push([]);
     }
     let up = true;
@@ -1123,8 +1123,8 @@ class TriangoBoard {
     const offsetY = 420;
     const gapX = 1;
     const gapY = 1;
-    for (let j = 0; j < 8; j += 1) {
-      for (let i = 0; i < 16; i += 1) {
+    for (let j = 0; j < 4; j += 1) {
+      for (let i = 0; i < 8; i += 1) {
         // 添加checker
         const triChecker = new _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["TriangleChecker"](offsetX + i * (r * cos30 + gapX) + j * (r * cos30 + gapY),
           offsetY - (1 + j) * (r * 1.5 + gapY), r, up, {
@@ -1152,13 +1152,13 @@ class TriangoBoard {
             y: j,
           });
         }
-        if (ii2 < 16) {
+        if (ii2 < 8) {
           this.adjacencylist[i][j].push({
             x: ii2,
             y: j,
           });
         }
-        if (ii < 16 && ii > -1 && jj < 8 && jj > -1) {
+        if (ii < 8 && ii > -1 && jj < 4 && jj > -1) {
           this.adjacencylist[i][j].push({
             x: ii,
             y: jj,
@@ -1171,25 +1171,25 @@ class TriangoBoard {
 
   /**
    * 通过棋盘坐标获得数据
-   * @param {number} x △ 的 x坐标 0~15
-   * @param {number} y △ 的 y坐标 0~7
+   * @param {number} x △ 的 x坐标 0~7
+   * @param {number} y △ 的 y坐标 0~3
    * @returns {PieceState} 返回一个棋子状态的“枚举值”
    */
   getData(x, y) {
-    if (x < 0 || x > 15 || y < 0 || y > 7) {
+    if (x < 0 || x > 7 || y < 0 || y > 3) {
       return _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].void;
     }
-    const flag = 1 << x;
-    if (this.black[y] & flag) {
+    const flag = 1 << (x + y * 8);
+    if (this.black & flag) {
       return _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].black;
     }
-    if (this.white[y] & flag) {
+    if (this.white & flag) {
       return _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].white;
     }
-    if (this.ban[y] & flag) {
+    if (this.ban & flag) {
       return _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].ban;
     }
-    if (this.ko[y] & flag) {
+    if (this.ko & flag) {
       return _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].ko;
     }
     return _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].blank;
@@ -1197,33 +1197,33 @@ class TriangoBoard {
 
   /**
    * 通过棋盘坐标设置数据
-   * @param {number} x △ 的 x坐标 0~15
-   * @param {number} y △ 的 y坐标 0~7
+   * @param {number} x △ 的 x坐标 0~7
+   * @param {number} y △ 的 y坐标 0~3
    * @param {PieceState} data 棋子的状态 {PieceState}
    */
   setData(x, y, data) {
-    if (x < 0 || x > 15 || y < 0 || y > 7) {
+    if (x < 0 || x > 7 || y < 0 || y > 3) {
       return;
     }
-    const flag = 1 << x;
+    const flag = 1 << (x + y * 8);
 
-    this.black[y] &= ~flag;
-    this.white[y] &= ~flag;
-    this.ban[y] &= ~flag;
-    this.ko[y] &= ~flag;
+    this.black &= ~flag;
+    this.white &= ~flag;
+    this.ban &= ~flag;
+    this.ko &= ~flag;
 
     switch (data) {
       case _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].black:
-        this.black[y] |= flag;
+        this.black |= flag;
         break;
       case _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].white:
-        this.white[y] |= flag;
+        this.white |= flag;
         break;
       case _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].ban:
-        this.ban[y] |= flag;
+        this.ban |= flag;
         break;
       case _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].ko:
-        this.ko[y] |= flag;
+        this.ko |= flag;
         break;
       default:
         break;
@@ -1325,26 +1325,24 @@ class TriangoBoard {
 
   handleInput(onboardchange) {
     const olddata = {
-      black: new Int32Array(this.black),
-      white: new Int32Array(this.white),
+      black: this.black,
+      white: this.white,
     };
     this.triCheckers.forEach(triChecker => triChecker.handleInput());
     if (!onboardchange) {
       return;
     }
-    let flag = false;
-    flag = olddata.black.some((value, index) => value !== this.black[index]);
-    flag = flag || olddata.white.some((value, index) => value !== this.white[index]);
-    if (flag) {
+
+    if (olddata.black !== this.black || olddata.white !== this.white) {
       onboardchange();
     }
   }
 
   clear() {
-    this.black = new Uint16Array(8); // 黑棋
-    this.white = new Uint16Array(8); // 白棋
-    this.ban = new Uint16Array(8); // 禁入点
-    this.ko = new Uint16Array(8); // 劫
+    this.black = 0; // 黑棋
+    this.white = 0; // 白棋
+    this.ban = 0; // 禁入点
+    this.ko = 0; // 劫
     this.updateAllCheckers();
   }
 }
