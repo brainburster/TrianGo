@@ -108,7 +108,6 @@ class TriangoBoard {
               x,
               y,
             } = checker.coordinate;
-            console.log(x, y);
             this.setData(x, y, color);
             return color;
           });
@@ -139,6 +138,7 @@ class TriangoBoard {
         }
       }
     }
+    this.updateAllCheckers();
   }
 
   /**
@@ -222,16 +222,12 @@ class TriangoBoard {
       }
       openlist.push(xx, yy);
       const adjs = this.adjacencylist[xx][yy];
-      let hasLiberty;
-      adjs.forEach((adj) => {
-        hasLiberty = hasLiberty || test(adj.x, adj.y, color);
-      });
-      return hasLiberty;
+      return adjs.reduce((total, adj) => total || test(adj.x, adj.y, color), false);
       // return adjs.some(adj => test(adj.x, adj.y, color));
     };
 
     let hasLiberty;
-    let takeflag = false;
+    let flag = false;
     const color = this.getData(x, y);
     adjacencys.forEach((adjacency) => {
       if (openlist.indexof(adjacency.x, adjacency.y) !== -1) {
@@ -241,12 +237,15 @@ class TriangoBoard {
       const yy = adjacency.y;
       const clr = this.getData(xx, yy);
       if (clr !== getOppositeColor(color)) {
+        if (clr === PieceState.blank) {
+          flag = true;
+        }
         return;
       }
       openlist.clear();
       hasLiberty = test(xx, yy, clr);
       if (!hasLiberty) {
-        takeflag = true;
+        flag = true;
         openlist.forEach((xxx, yyy) => {
           deletlist.push({
             x: xxx,
@@ -257,7 +256,7 @@ class TriangoBoard {
     });
 
     // 如果对方还有气
-    if (!takeflag) {
+    if (!flag) {
       openlist.clear();
       hasLiberty = test(x, y, color);
       if (!hasLiberty) {
@@ -311,6 +310,14 @@ class TriangoBoard {
     if (flag) {
       onboardchange();
     }
+  }
+
+  clear() {
+    this.black = new Uint16Array(8); // 黑棋
+    this.white = new Uint16Array(8); // 白棋
+    this.ban = new Uint16Array(8); // 禁入点
+    this.ko = new Uint16Array(8); // 劫
+    this.updateAllCheckers();
   }
 }
 

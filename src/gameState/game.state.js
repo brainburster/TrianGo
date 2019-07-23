@@ -14,6 +14,7 @@ const triangoBoard = TriangoBoard.instance;
 const allGameStates = {
   gameStart: null,
   gameEnd: null,
+  debug: null,
   twoP: null,
   playersTurn: null,
   aisTurn: null,
@@ -76,7 +77,7 @@ allGameStates.gameEnd = (function GameEnd() {
 // ///////////////////////////////////////
 allGameStates.debug = (() => {
   const o = {};
-  const returnBtn = new CanvasButton(80, 50, 80, 50, 20, 'return', () => {
+  const btnReturn = new CanvasButton(80, 50, 80, 50, 20, 'return', () => {
     game.changeState(allGameStates.gameStart);
   });
   const btnSwapColor = new CanvasButton(210, 50, 80, 50, 20, 'black', () => {
@@ -85,20 +86,25 @@ allGameStates.debug = (() => {
     // eslint-disable-next-line no-unused-expressions
     btnSwapColor.text === 'black' ? btnSwapColor.x = 210 : btnSwapColor.x = 330;
   });
+  const btnClear = new CanvasButton(450, 50, 80, 50, 20, 'clear', () => {
+    triangoBoard.clear();
+  });
   o.handleInput = () => {
     const x = input.mouseX;
     const y = input.mouseY;
     const lbtndown = input.lBtnDown;
-    returnBtn.handleInput(x, y, lbtndown);
+    btnReturn.handleInput(x, y, lbtndown);
     btnSwapColor.handleInput(x, y, lbtndown);
+    btnClear.handleInput(x, y, lbtndown);
     triangoBoard.handleInput();
   };
   o.update = () => {
     triangoBoard.update();
   };
   o.render = () => {
-    returnBtn.render(ctx);
+    btnReturn.render(ctx);
     btnSwapColor.render(ctx);
+    btnClear.render(ctx);
     triangoBoard.render();
   };
   return o;
