@@ -26,11 +26,14 @@ const allGameStates = {
 // ///////////////////////////////////////
 allGameStates.gameStart = (function GameStart() {
   const o = {};
-  const btn1 = new CanvasButton(100, 100, 50, 50, 20, '2p', () => {
+  const btn1 = new CanvasButton(100, 100, 50, 50, 20, '2P', () => {
     game.changeState(allGameStates.twoP);
   });
   const btn2 = new CanvasButton(200, 100, 50, 50, 20, 'AI', () => {
     game.changeState(allGameStates.playersTurn);
+  });
+  const btn3 = new CanvasButton(300, 100, 80, 50, 20, 'debug', () => {
+    game.changeState(allGameStates.debug);
   });
   o.handleInput = () => {
     const x = input.mouseX;
@@ -38,10 +41,12 @@ allGameStates.gameStart = (function GameStart() {
     const lbtndown = input.lBtnDown;
     btn1.handleInput(x, y, lbtndown);
     btn2.handleInput(x, y, lbtndown);
+    btn3.handleInput(x, y, lbtndown);
   };
   o.render = () => {
     btn1.render(ctx);
     btn2.render(ctx);
+    btn3.render(ctx);
     ctx.fillStyle = 'black';
     ctx.fillText('gameStart!', 160, 50);
   };
@@ -66,12 +71,46 @@ allGameStates.gameEnd = (function GameEnd() {
 
 // ///////////////////////////////////////
 /**
+ * debug mode
+ */
+// ///////////////////////////////////////
+allGameStates.debug = (() => {
+  const o = {};
+  const returnBtn = new CanvasButton(80, 50, 80, 50, 20, 'return', () => {
+    game.changeState(allGameStates.gameStart);
+  });
+  const btnSwapColor = new CanvasButton(210, 50, 80, 50, 20, 'black', () => {
+    global.swapColor();
+    btnSwapColor.text = btnSwapColor.text === 'black' ? 'white' : 'black';
+    // eslint-disable-next-line no-unused-expressions
+    btnSwapColor.text === 'black' ? btnSwapColor.x = 210 : btnSwapColor.x = 330;
+  });
+  o.handleInput = () => {
+    const x = input.mouseX;
+    const y = input.mouseY;
+    const lbtndown = input.lBtnDown;
+    returnBtn.handleInput(x, y, lbtndown);
+    btnSwapColor.handleInput(x, y, lbtndown);
+    triangoBoard.handleInput();
+  };
+  o.update = () => {
+    triangoBoard.update();
+  };
+  o.render = () => {
+    returnBtn.render(ctx);
+    btnSwapColor.render(ctx);
+    triangoBoard.render();
+  };
+  return o;
+})();
+
+// ///////////////////////////////////////
+/**
  * 2个人轮流下棋
  */
 // ///////////////////////////////////////
 allGameStates.twoP = (() => {
   const o = {};
-  o.nextState = () => allGameStates.twoP;
   o.handleInput = () => {
     triangoBoard.handleInput(() => {
       global.swapColor();
