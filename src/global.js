@@ -18,15 +18,15 @@ const global = (() => {
     white: 2,
     ban: 3,
     ko: 4,
-    playerColor: 1,
-    AIColor: 2,
+    currentColor: 1,
+    nextColor: 2,
   };
 
   const swapColor = () => {
     /* eslint-disable no-bitwise */
-    PieceState.AIColor ^= PieceState.playerColor;
-    PieceState.playerColor ^= PieceState.AIColor;
-    PieceState.AIColor ^= PieceState.playerColor;
+    PieceState.nextColor ^= PieceState.currentColor;
+    PieceState.currentColor ^= PieceState.nextColor;
+    PieceState.nextColor ^= PieceState.currentColor;
     /* eslint-enable no-bitwise */
   };
   return {

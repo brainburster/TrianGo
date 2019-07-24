@@ -431,6 +431,8 @@ allGameStates.debug = (() => {
     btnSwapColor.text = btnSwapColor.text === 'black' ? 'white' : 'black';
     // eslint-disable-next-line no-unused-expressions
     btnSwapColor.text === 'black' ? btnSwapColor.x = 210 : btnSwapColor.x = 330;
+    triangoBoard.updateBanAndKo();
+    triangoBoard.updateAllCheckers();
   });
   const btnClear = new _canvasButton__WEBPACK_IMPORTED_MODULE_1__["default"](450, 50, 80, 50, 20, 'clear', () => {
     triangoBoard.clear();
@@ -551,15 +553,15 @@ const global = (() => {
     white: 2,
     ban: 3,
     ko: 4,
-    playerColor: 1,
-    AIColor: 2,
+    currentColor: 1,
+    nextColor: 2,
   };
 
   const swapColor = () => {
     /* eslint-disable no-bitwise */
-    PieceState.AIColor ^= PieceState.playerColor;
-    PieceState.playerColor ^= PieceState.AIColor;
-    PieceState.AIColor ^= PieceState.playerColor;
+    PieceState.nextColor ^= PieceState.currentColor;
+    PieceState.currentColor ^= PieceState.nextColor;
+    PieceState.nextColor ^= PieceState.currentColor;
     /* eslint-enable no-bitwise */
   };
   return {
@@ -1112,6 +1114,15 @@ class History {
     board.ban = backup.ban;
     return true;
   }
+
+  contain(black, white) {
+    return this.data.some(v => v.black === black && v.white === white);
+  }
+
+  clear() {
+    this.data.length = 1;
+    this.current = 0;
+  }
 }
 
 class OpenList {
@@ -1210,12 +1221,12 @@ class TriangoBoard {
             x: i,
             y: j,
           }, (checker) => {
-            const color = _global__WEBPACK_IMPORTED_MODULE_1__["default"].getAllPieceState().playerColor;
+            const color = _global__WEBPACK_IMPORTED_MODULE_1__["default"].getAllPieceState().currentColor;
             const {
               x,
               y,
             } = checker.coordinate;
-            this.setData(x, y, color);
+            this.placePiece(x, y, color);
             return color;
           });
         this.triCheckers.push(triChecker);
@@ -1250,11 +1261,21 @@ class TriangoBoard {
   }
 
   undo() {
-    return this.history.undo(this);
+    if (this.history.undo(this)) {
+      this.updateBanAndKo();
+      this.updateAllCheckers();
+      return true;
+    }
+    return false;
   }
 
   redo() {
-    return this.history.redo(this);
+    if (this.history.redo(this)) {
+      this.updateBanAndKo();
+      this.updateAllCheckers();
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -1316,12 +1337,60 @@ class TriangoBoard {
       default:
         break;
     }
-    this.updateBoard(x, y);
+  }
+
+  placePiece(x, y, color) {
+    this.setData(x, y, color);
+    this.updateBlackAndWhite(x, y);
+    this.updateBanAndKo();
     this.updateAllCheckers();
     this.history.push(this);
   }
 
-  updateBoard(x, y) {
+  updateBanAndKo() {
+    this.ban = 0;
+    this.ko = 0;
+    const scanPoints = [];
+    for (let j = 0; j < 4; j += 1) {
+      for (let i = 0; i < 8; i += 1) {
+        if (this.getData(i, j) === _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].blank) {
+          const adjacencys = this.adjacencylist[i][j];
+          const sum = adjacencys.reduce((previous, current) => {
+            const color = this.getData(current.x, current.y);
+            return previous + ((color === _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].blank) ? 0 : 1);
+          }, 0);
+
+          if (sum === adjacencys.length) {
+            scanPoints.push({
+              x: i,
+              y: j,
+            });
+          }
+        }
+      }
+    }
+
+    // update ban and ko
+    const backupBlack = this.black;
+    const backupWhite = this.white;
+    scanPoints.forEach((point) => {
+      const {
+        x,
+        y,
+      } = point;
+      this.setData(x, y, _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].currentColor);
+      this.updateBlackAndWhite(x, y);
+      if (this.getData(x, y) === _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].blank) {
+        this.setData(x, y, _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].ban);
+      } else if (this.history.contain(this.black, this.white, this.currentColor)) {
+        this.setData(x, y, _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].ko);
+      }
+      this.black = backupBlack;
+      this.white = backupWhite;
+    });
+  }
+
+  updateBlackAndWhite(x, y) {
     const openlist = new OpenList();
     const adjacencys = this.adjacencylist[x][y];
     const deletlist = [];
@@ -1424,6 +1493,8 @@ class TriangoBoard {
 
     if (olddata.black !== this.black || olddata.white !== this.white) {
       onboardchange();
+      this.updateBanAndKo();
+      this.updateAllCheckers();
     }
   }
 
@@ -1432,6 +1503,7 @@ class TriangoBoard {
     this.white = 0; // 白棋
     this.ban = 0; // 禁入点
     this.ko = 0; // 劫
+    this.history.clear();
     this.updateAllCheckers();
   }
 }

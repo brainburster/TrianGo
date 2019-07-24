@@ -120,6 +120,8 @@ allGameStates.debug = (() => {
     btnSwapColor.text = btnSwapColor.text === 'black' ? 'white' : 'black';
     // eslint-disable-next-line no-unused-expressions
     btnSwapColor.text === 'black' ? btnSwapColor.x = 210 : btnSwapColor.x = 330;
+    triangoBoard.updateBanAndKo();
+    triangoBoard.updateAllCheckers();
   });
   const btnClear = new CanvasButton(450, 50, 80, 50, 20, 'clear', () => {
     triangoBoard.clear();

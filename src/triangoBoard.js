@@ -53,6 +53,15 @@ class History {
     board.ban = backup.ban;
     return true;
   }
+
+  contain(black, white) {
+    return this.data.some(v => v.black === black && v.white === white);
+  }
+
+  clear() {
+    this.data.length = 1;
+    this.current = 0;
+  }
 }
 
 class OpenList {
@@ -151,12 +160,12 @@ class TriangoBoard {
             x: i,
             y: j,
           }, (checker) => {
-            const color = global.getAllPieceState().playerColor;
+            const color = global.getAllPieceState().currentColor;
             const {
               x,
               y,
             } = checker.coordinate;
-            this.setData(x, y, color);
+            this.placePiece(x, y, color);
             return color;
           });
         this.triCheckers.push(triChecker);
@@ -191,11 +200,21 @@ class TriangoBoard {
   }
 
   undo() {
-    return this.history.undo(this);
+    if (this.history.undo(this)) {
+      this.updateBanAndKo();
+      this.updateAllCheckers();
+      return true;
+    }
+    return false;
   }
 
   redo() {
-    return this.history.redo(this);
+    if (this.history.redo(this)) {
+      this.updateBanAndKo();
+      this.updateAllCheckers();
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -257,12 +276,60 @@ class TriangoBoard {
       default:
         break;
     }
-    this.updateBoard(x, y);
+  }
+
+  placePiece(x, y, color) {
+    this.setData(x, y, color);
+    this.updateBlackAndWhite(x, y);
+    this.updateBanAndKo();
     this.updateAllCheckers();
     this.history.push(this);
   }
 
-  updateBoard(x, y) {
+  updateBanAndKo() {
+    this.ban = 0;
+    this.ko = 0;
+    const scanPoints = [];
+    for (let j = 0; j < 4; j += 1) {
+      for (let i = 0; i < 8; i += 1) {
+        if (this.getData(i, j) === PieceState.blank) {
+          const adjacencys = this.adjacencylist[i][j];
+          const sum = adjacencys.reduce((previous, current) => {
+            const color = this.getData(current.x, current.y);
+            return previous + ((color === PieceState.blank) ? 0 : 1);
+          }, 0);
+
+          if (sum === adjacencys.length) {
+            scanPoints.push({
+              x: i,
+              y: j,
+            });
+          }
+        }
+      }
+    }
+
+    // update ban and ko
+    const backupBlack = this.black;
+    const backupWhite = this.white;
+    scanPoints.forEach((point) => {
+      const {
+        x,
+        y,
+      } = point;
+      this.setData(x, y, PieceState.currentColor);
+      this.updateBlackAndWhite(x, y);
+      if (this.getData(x, y) === PieceState.blank) {
+        this.setData(x, y, PieceState.ban);
+      } else if (this.history.contain(this.black, this.white, this.currentColor)) {
+        this.setData(x, y, PieceState.ko);
+      }
+      this.black = backupBlack;
+      this.white = backupWhite;
+    });
+  }
+
+  updateBlackAndWhite(x, y) {
     const openlist = new OpenList();
     const adjacencys = this.adjacencylist[x][y];
     const deletlist = [];
@@ -365,6 +432,8 @@ class TriangoBoard {
 
     if (olddata.black !== this.black || olddata.white !== this.white) {
       onboardchange();
+      this.updateBanAndKo();
+      this.updateAllCheckers();
     }
   }
 
@@ -373,6 +442,7 @@ class TriangoBoard {
     this.white = 0; // 白棋
     this.ban = 0; // 禁入点
     this.ko = 0; // 劫
+    this.history.clear();
     this.updateAllCheckers();
   }
 }
