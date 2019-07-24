@@ -13,6 +13,9 @@ module.exports = {
     "sourceType": "module"
   },
   "rules": {
-    "linebreak-style": [0, "error", "windows"]
+    "linebreak-style": [0, "error", "windows"],
+    "no-unused-expressions": 0,
+    "no-param-reassign": 0,
+    "no-bitwise": 0
   }
 }

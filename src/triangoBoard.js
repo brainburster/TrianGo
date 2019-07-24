@@ -1,10 +1,7 @@
-/* eslint-disable no-param-reassign */
-/* eslint-disable no-bitwise */
 import {
   PieceState,
   TriangleChecker as TriChecker,
 } from './triangleChecker';
-import global from './global';
 
 const cos30 = 0.866;
 
@@ -22,6 +19,7 @@ class History {
       white: board.white,
       ban: board.ban,
       ko: board.ko,
+      cclr: board.currentColor,
     });
     this.current += 1;
   }
@@ -37,6 +35,7 @@ class History {
     board.white = backup.white;
     board.ko = backup.ko;
     board.ban = backup.ban;
+    board.currentColor = backup.cclr;
     return true;
   }
 
@@ -51,11 +50,20 @@ class History {
     board.white = backup.white;
     board.ko = backup.ko;
     board.ban = backup.ban;
+    board.currentColor = backup.cclr;
     return true;
   }
 
-  contain(black, white) {
-    return this.data.some(v => v.black === black && v.white === white);
+  contain(black, white, currentColor) {
+    for (let i = 0; i <= this.current; i += 1) {
+      const backup = this.data[i];
+      if (backup.black === black && backup.white === white && backup.cclr === currentColor) {
+        return true;
+      }
+    }
+    return false;
+    // return this.data.some((v, i) => i <= this.current
+    // && v.black === black && v.white === white && v.cclr === currentColor);
   }
 
   clear() {
@@ -139,6 +147,7 @@ class TriangoBoard {
     this.white = 0; // 白棋
     this.ban = 0; // 禁入点
     this.ko = 0; // 劫
+    this.currentColor = PieceState.black;
     /** @type {TriChecker[]} */
     this.triCheckers = [];
     /** @type {{x:number,y:number}[][][]} */
@@ -160,13 +169,12 @@ class TriangoBoard {
             x: i,
             y: j,
           }, (checker) => {
-            const color = global.getAllPieceState().currentColor;
             const {
               x,
               y,
             } = checker.coordinate;
-            this.placePiece(x, y, color);
-            return color;
+            this.placePiece(x, y, this.currentColor);
+            return this.currentColor;
           });
         this.triCheckers.push(triChecker);
         up = !up;
@@ -197,6 +205,10 @@ class TriangoBoard {
     }
     this.updateAllCheckers();
     this.history = new History(this);
+  }
+
+  setCurrentColor(color) {
+    this.currentColor = color;
   }
 
   undo() {
@@ -281,12 +293,13 @@ class TriangoBoard {
   placePiece(x, y, color) {
     this.setData(x, y, color);
     this.updateBlackAndWhite(x, y);
-    this.updateBanAndKo();
-    this.updateAllCheckers();
-    this.history.push(this);
   }
 
-  updateBanAndKo() {
+  isGameEnd() {
+    return (this.black | this.white | this.ban | this.ko) === -1;
+  }
+
+  updateBanAndKo(clr) {
     this.ban = 0;
     this.ko = 0;
     const scanPoints = [];
@@ -317,11 +330,11 @@ class TriangoBoard {
         x,
         y,
       } = point;
-      this.setData(x, y, PieceState.currentColor);
+      this.setData(x, y, clr);
       this.updateBlackAndWhite(x, y);
       if (this.getData(x, y) === PieceState.blank) {
         this.setData(x, y, PieceState.ban);
-      } else if (this.history.contain(this.black, this.white, this.currentColor)) {
+      } else if (this.history.contain(this.black, this.white, clr)) {
         this.setData(x, y, PieceState.ko);
       }
       this.black = backupBlack;
@@ -398,7 +411,6 @@ class TriangoBoard {
       this.setData(point.x, point.y, PieceState.blank);
     });
     openlist.clear();
-    deletlist.length = 0;
   }
 
   updateAllCheckers() {
@@ -414,27 +426,30 @@ class TriangoBoard {
     });
   }
 
-  render() {
+  render(ctx) {
     this.triCheckers.forEach((triChecker) => {
-      triChecker.render();
+      triChecker.render(ctx);
     });
   }
 
-  handleInput(onboardchange) {
-    const olddata = {
+  handleInput(x, y, lBtnDown, onBoardChange, onGameEnd) {
+    const oldData = {
       black: this.black,
       white: this.white,
     };
-    this.triCheckers.forEach(triChecker => triChecker.handleInput());
-    if (!onboardchange) {
-      return;
-    }
+    this.triCheckers.forEach(triChecker => triChecker.handleInput(x, y, lBtnDown));
 
-    if (olddata.black !== this.black || olddata.white !== this.white) {
-      onboardchange();
-      this.updateBanAndKo();
+    if (oldData.black !== this.black || oldData.white !== this.white) {
+      onBoardChange && onBoardChange();
+      this.updateBanAndKo(this.currentColor);
       this.updateAllCheckers();
+      this.history.push(this);
+      if (this.isGameEnd()) {
+        onGameEnd && onGameEnd();
+      }
+      return true;
     }
+    return false;
   }
 
   clear() {
@@ -442,6 +457,7 @@ class TriangoBoard {
     this.white = 0; // 白棋
     this.ban = 0; // 禁入点
     this.ko = 0; // 劫
+    this.currentColor = PieceState.black;
     this.history.clear();
     this.updateAllCheckers();
   }

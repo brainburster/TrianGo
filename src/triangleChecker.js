@@ -1,9 +1,19 @@
 import Triangle from './triangle';
-import global from './global';
 
-const ctx = global.getCtx();
-const input = global.getInput();
-const PieceState = global.getAllPieceState();
+/**
+ * 棋子状态的枚举
+ * Enum for piece state
+ * @readonly
+ * @enum {number}
+ */
+const PieceState = {
+  void: -1,
+  blank: 0,
+  black: 1,
+  white: 2,
+  ban: 3,
+  ko: 4,
+};
 
 
 /**
@@ -29,10 +39,10 @@ const CheckerState = {
           szColor = 'gray';
           break;
         case PieceState.ban:
-          szColor = 'green';
+          szColor = 'pink';
           break;
         case PieceState.ko:
-          szColor = 'purple';
+          szColor = 'green';
           break;
         default:
           szColor = 'blue';
@@ -43,16 +53,14 @@ const CheckerState = {
     update: (checker) => {
       CheckerState.normal.onStart(checker);
     },
-    handleInput: (checker) => {
-      const x = input.mouseX;
-      const y = input.mouseY;
+    handleInput: (x, y, lBtnDown, checker) => {
       if (checker.data !== PieceState.blank) {
         return;
       }
       if (!checker.triangle.mouseCheck(x, y)) {
         return;
       }
-      if (input.lBtnDown) {
+      if (lBtnDown) {
         checker.changeState(CheckerState.keydown);
       } else {
         checker.changeState(CheckerState.hover);
@@ -67,10 +75,8 @@ const CheckerState = {
     onStart: (checker) => {
       checker.setColor('yellow');
     },
-    handleInput: (checker) => {
-      const x = input.mouseX;
-      const y = input.mouseY;
-      if (input.lBtnDown) {
+    handleInput: (x, y, lBtnDown, checker) => {
+      if (lBtnDown) {
         checker.changeState(CheckerState.keydown);
       } else if (!checker.triangle.mouseCheck(x, y)) {
         checker.changeState(CheckerState.normal);
@@ -81,24 +87,14 @@ const CheckerState = {
     onStart: (checker) => {
       checker.setColor('red');
     },
-    handleInput: (checker) => {
-      const x = input.mouseX;
-      const y = input.mouseY;
+    handleInput: (x, y, lBtnDown, checker) => {
       if (!checker.triangle.mouseCheck(x, y)) {
         checker.changeState(CheckerState.normal);
       }
-      if (!input.lBtnDown) {
-        // checker.changeState(CheckerState.hover);
-        checker.changeState(CheckerState.active);
+      if (!lBtnDown) {
+        checker.onactive(checker);
+        checker.changeState(CheckerState.normal);
       }
-    },
-  },
-  active: {
-    onStart: (checker) => {
-      checker.onactive(checker);
-    },
-    handleInput: (checker) => {
-      checker.changeState(CheckerState.normal);
     },
   },
 };
@@ -148,12 +144,12 @@ class TriangleChecker {
     this.state.onStart(this);
   }
 
-  render() {
+  render(ctx) {
     return this.triangle.draw && this.triangle.draw(ctx);
   }
 
-  handleInput() {
-    return this.state.handleInput && this.state.handleInput(this);
+  handleInput(x, y, lBtnDown) {
+    return this.state.handleInput && this.state.handleInput(x, y, lBtnDown, this);
   }
 
   update() {

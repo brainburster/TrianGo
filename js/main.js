@@ -86,6 +86,50 @@
 /************************************************************************/
 /******/ ({
 
+/***/ "./src/AI.js":
+/*!*******************!*\
+  !*** ./src/AI.js ***!
+  \*******************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _triangleChecker__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./triangleChecker */ "./src/triangleChecker.js");
+// import TriangoBoard from './triangoBoard';
+
+
+class AI {
+  /** @param {TriangoBoard} board */
+  constructor(board, onGameEnd) {
+    this.board = board;
+    this.onGameEnd = onGameEnd;
+  }
+
+  run() {
+    this.board.updateBanAndKo(_triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].white);
+    if (this.board.isGameEnd()) {
+      this.onGameEnd && this.onGameEnd();
+      return null;
+    }
+    let x;
+    let y;
+    do {
+      x = Math.random() * 8 >>> 0;
+      y = Math.random() * 4 >>> 0;
+    } while (this.board.getData(x, y) !== _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].blank);
+    return {
+      x,
+      y,
+    };
+  }
+}
+
+/* harmony default export */ __webpack_exports__["default"] = (AI);
+
+
+/***/ }),
+
 /***/ "./src/canvasButton.js":
 /*!*****************************!*\
   !*** ./src/canvasButton.js ***!
@@ -309,6 +353,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _global__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../global */ "./src/global.js");
 /* harmony import */ var _canvasButton__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../canvasButton */ "./src/canvasButton.js");
 /* harmony import */ var _triangoBoard__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../triangoBoard */ "./src/triangoBoard.js");
+/* harmony import */ var _triangleChecker__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../triangleChecker */ "./src/triangleChecker.js");
+/* harmony import */ var _AI__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../AI */ "./src/AI.js");
+
+
 
 
 
@@ -322,7 +370,7 @@ const triangoBoard = _triangoBoard__WEBPACK_IMPORTED_MODULE_2__["default"].insta
 /**
  * 所有游戏状态
  */
-const allGameStates = {
+const GameStates = {
   gameStart: null,
   gameEnd: null,
   debug: null,
@@ -333,34 +381,40 @@ const allGameStates = {
 
 const gameScene = (() => {
   const o = {};
+
+  function GameEnd() {
+    game.changeState(GameStates.gameEnd);
+  }
   const triBoard = _triangoBoard__WEBPACK_IMPORTED_MODULE_2__["default"].instance;
   const btnReturn = new _canvasButton__WEBPACK_IMPORTED_MODULE_1__["default"](80, 50, 80, 50, 20, 'return', () => {
-    game.changeState(allGameStates.gameStart);
+    triBoard.clear();
+    game.changeState(GameStates.gameStart);
   });
-  const btnRedo = new _canvasButton__WEBPACK_IMPORTED_MODULE_1__["default"](80, 150, 80, 50, 20, 'redo', () => {
-    if (triangoBoard.redo()) {
-      triangoBoard.updateAllCheckers();
-    }
-  });
-  const btnUndo = new _canvasButton__WEBPACK_IMPORTED_MODULE_1__["default"](80, 250, 80, 50, 20, 'Undo', () => {
+  const btnUndo = new _canvasButton__WEBPACK_IMPORTED_MODULE_1__["default"](80, 150, 80, 50, 20, 'undo', () => {
     if (triangoBoard.undo()) {
       triangoBoard.updateAllCheckers();
     }
   });
-  o.handleInput = (callback) => {
+  const btnRedo = new _canvasButton__WEBPACK_IMPORTED_MODULE_1__["default"](80, 250, 80, 50, 20, 'redo', () => {
+    if (triangoBoard.redo()) {
+      triangoBoard.updateAllCheckers();
+    }
+  });
+
+  o.handleInput = (onBoardChange) => {
     const x = input.mouseX;
     const y = input.mouseY;
     const lbtndown = input.lBtnDown;
     btnReturn.handleInput(x, y, lbtndown);
-    triBoard.handleInput(callback);
     btnRedo.handleInput(x, y, lbtndown);
     btnUndo.handleInput(x, y, lbtndown);
+    return triBoard.handleInput(x, y, lbtndown, onBoardChange, GameEnd);
   };
   o.update = () => {
     triBoard.update();
   };
   o.render = () => {
-    triBoard.render();
+    triBoard.render(ctx);
     btnRedo.render(ctx);
     btnUndo.render(ctx);
     btnReturn.render(ctx);
@@ -374,16 +428,16 @@ const gameScene = (() => {
  * 游戏开始（设置）界面
  */
 // ///////////////////////////////////////
-allGameStates.gameStart = (function GameStart() {
+GameStates.gameStart = (function GameStart() {
   const o = {};
-  const btn1 = new _canvasButton__WEBPACK_IMPORTED_MODULE_1__["default"](100, 100, 50, 50, 20, '2P', () => {
-    game.changeState(allGameStates.twoP);
+  const btn1 = new _canvasButton__WEBPACK_IMPORTED_MODULE_1__["default"](290, 120, 50, 50, 20, '2P', () => {
+    game.changeState(GameStates.twoP);
   });
-  const btn2 = new _canvasButton__WEBPACK_IMPORTED_MODULE_1__["default"](200, 100, 50, 50, 20, 'AI', () => {
-    game.changeState(allGameStates.playersTurn);
+  const btn2 = new _canvasButton__WEBPACK_IMPORTED_MODULE_1__["default"](390, 120, 50, 50, 20, 'AI', () => {
+    game.changeState(GameStates.playersTurn);
   });
-  const btn3 = new _canvasButton__WEBPACK_IMPORTED_MODULE_1__["default"](300, 100, 80, 50, 20, 'debug', () => {
-    game.changeState(allGameStates.debug);
+  const btn3 = new _canvasButton__WEBPACK_IMPORTED_MODULE_1__["default"](505, 120, 80, 50, 20, 'debug', () => {
+    game.changeState(GameStates.debug);
   });
   o.handleInput = () => {
     const x = input.mouseX;
@@ -398,7 +452,7 @@ allGameStates.gameStart = (function GameStart() {
     btn2.render(ctx);
     btn3.render(ctx);
     ctx.fillStyle = 'black';
-    ctx.fillText('gameStart!', 160, 50);
+    ctx.fillText('GameStart!', 400, 50);
   };
   return o;
 }());
@@ -408,13 +462,26 @@ allGameStates.gameStart = (function GameStart() {
  * 游戏结束界面
  */
 // ///////////////////////////////////////
-allGameStates.gameEnd = (function GameEnd() {
+GameStates.gameEnd = (function GameEnd() {
   const o = {};
-  o.nextState = () => allGameStates.gameStart;
-  o.handleInput = () => {};
+  const btnReturn = new _canvasButton__WEBPACK_IMPORTED_MODULE_1__["default"](80, 50, 80, 50, 20, 'return', () => {
+    triangoBoard.clear();
+    game.changeState(GameStates.gameStart);
+  });
+  o.handleInput = () => {
+    const x = input.mouseX;
+    const y = input.mouseY;
+    const lbtndown = input.lBtnDown;
+    btnReturn.handleInput(x, y, lbtndown);
+  };
+  o.update = () => {
+    triangoBoard.update();
+  };
   o.render = () => {
+    triangoBoard.render(ctx);
+    btnReturn.render(ctx);
     ctx.fillStyle = 'black';
-    ctx.fillText('gameEnd!', 50, 50);
+    ctx.fillText('GameEnd!', 400, 50);
   };
   return o;
 }());
@@ -424,10 +491,10 @@ allGameStates.gameEnd = (function GameEnd() {
  * debug mode
  */
 // ///////////////////////////////////////
-allGameStates.debug = (() => {
+GameStates.debug = (() => {
   const o = {};
   const btnSwapColor = new _canvasButton__WEBPACK_IMPORTED_MODULE_1__["default"](210, 50, 80, 50, 20, 'black', () => {
-    _global__WEBPACK_IMPORTED_MODULE_0__["default"].swapColor();
+    triangoBoard.setCurrentColor(btnSwapColor.text === 'black' ? _triangleChecker__WEBPACK_IMPORTED_MODULE_3__["PieceState"].white : _triangleChecker__WEBPACK_IMPORTED_MODULE_3__["PieceState"].black);
     btnSwapColor.text = btnSwapColor.text === 'black' ? 'white' : 'black';
     // eslint-disable-next-line no-unused-expressions
     btnSwapColor.text === 'black' ? btnSwapColor.x = 210 : btnSwapColor.x = 330;
@@ -461,12 +528,16 @@ allGameStates.debug = (() => {
  * 2个人轮流下棋
  */
 // ///////////////////////////////////////
-allGameStates.twoP = (() => {
+GameStates.twoP = (() => {
   const o = {};
+
+  function swapColor() {
+    triangoBoard.setCurrentColor(triangoBoard.currentColor === _triangleChecker__WEBPACK_IMPORTED_MODULE_3__["PieceState"].black
+      ? _triangleChecker__WEBPACK_IMPORTED_MODULE_3__["PieceState"].white : _triangleChecker__WEBPACK_IMPORTED_MODULE_3__["PieceState"].black);
+  }
+
   o.handleInput = () => {
-    gameScene.handleInput(() => {
-      _global__WEBPACK_IMPORTED_MODULE_0__["default"].swapColor();
-    });
+    gameScene.handleInput(swapColor);
   };
   o.update = () => {
     gameScene.update();
@@ -483,16 +554,23 @@ allGameStates.twoP = (() => {
  * 轮到玩家的回合
  */
 // ///////////////////////////////////////
-allGameStates.playersTurn = (function PlayersTurn() {
+GameStates.playersTurn = (function PlayersTurn() {
   const o = {};
+
+  function waitAI() {
+    game.changeState(GameStates.aisTurn);
+  }
+
   o.handleInput = () => {
-    gameScene.handleInput();
+    gameScene.handleInput(waitAI);
   };
   o.update = () => {
     gameScene.update();
   };
   o.render = () => {
     gameScene.render();
+    ctx.fillStyle = 'black';
+    ctx.fillText('player', 400, 50);
   };
   return o;
 }());
@@ -503,21 +581,33 @@ allGameStates.playersTurn = (function PlayersTurn() {
  * class AIsTurn : InGame
  */
 // ///////////////////////////////////////
-allGameStates.aisTurn = (function AIsTurn() {
+GameStates.aisTurn = (function AIsTurn() {
   const o = {};
-  o.handleInput = () => {
-    gameScene.handleInput();
-  };
+  const ai = new _AI__WEBPACK_IMPORTED_MODULE_4__["default"](triangoBoard, () => {
+    triangoBoard.updateBanAndKo(_triangleChecker__WEBPACK_IMPORTED_MODULE_3__["PieceState"].white);
+    triangoBoard.updateAllCheckers();
+    game.changeState(GameStates.gameEnd);
+  });
+
   o.update = () => {
+    const point = ai.run();
+    if (point) {
+      triangoBoard.placePiece(point.x, point.y, _triangleChecker__WEBPACK_IMPORTED_MODULE_3__["PieceState"].white);
+      triangoBoard.updateBanAndKo(_triangleChecker__WEBPACK_IMPORTED_MODULE_3__["PieceState"].black);
+      triangoBoard.updateAllCheckers();
+      game.changeState(GameStates.playersTurn);
+    }
     gameScene.update();
   };
   o.render = () => {
     gameScene.render();
+    ctx.fillStyle = 'black';
+    ctx.fillText('AI', 400, 50);
   };
   return o;
 }());
 
-/* harmony default export */ __webpack_exports__["default"] = (allGameStates);
+/* harmony default export */ __webpack_exports__["default"] = (GameStates);
 
 
 /***/ }),
@@ -540,37 +630,11 @@ const global = (() => {
   const game = new _game__WEBPACK_IMPORTED_MODULE_0__["default"]();
   const input = new _input__WEBPACK_IMPORTED_MODULE_1__["default"](game.canvas);
   input.listen();
-  /**
-   * 棋子状态的枚举
-   * Enum for piece state
-   * @readonly
-   * @enum {number}
-   */
-  const PieceState = {
-    void: -1,
-    blank: 0,
-    black: 1,
-    white: 2,
-    ban: 3,
-    ko: 4,
-    currentColor: 1,
-    nextColor: 2,
-  };
-
-  const swapColor = () => {
-    /* eslint-disable no-bitwise */
-    PieceState.nextColor ^= PieceState.currentColor;
-    PieceState.currentColor ^= PieceState.nextColor;
-    PieceState.nextColor ^= PieceState.currentColor;
-    /* eslint-enable no-bitwise */
-  };
   return {
     getGame: () => game,
     getCtx: () => game.ctx,
     getCanvas: () => game.canvas,
     getInput: () => input,
-    getAllPieceState: () => PieceState,
-    swapColor,
   };
 })();
 
@@ -882,13 +946,22 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "PieceState", function() { return PieceState; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "TriangleChecker", function() { return TriangleChecker; });
 /* harmony import */ var _triangle__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./triangle */ "./src/triangle.js");
-/* harmony import */ var _global__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./global */ "./src/global.js");
 
 
-
-const ctx = _global__WEBPACK_IMPORTED_MODULE_1__["default"].getCtx();
-const input = _global__WEBPACK_IMPORTED_MODULE_1__["default"].getInput();
-const PieceState = _global__WEBPACK_IMPORTED_MODULE_1__["default"].getAllPieceState();
+/**
+ * 棋子状态的枚举
+ * Enum for piece state
+ * @readonly
+ * @enum {number}
+ */
+const PieceState = {
+  void: -1,
+  blank: 0,
+  black: 1,
+  white: 2,
+  ban: 3,
+  ko: 4,
+};
 
 
 /**
@@ -914,10 +987,10 @@ const CheckerState = {
           szColor = 'gray';
           break;
         case PieceState.ban:
-          szColor = 'green';
+          szColor = 'pink';
           break;
         case PieceState.ko:
-          szColor = 'purple';
+          szColor = 'green';
           break;
         default:
           szColor = 'blue';
@@ -928,16 +1001,14 @@ const CheckerState = {
     update: (checker) => {
       CheckerState.normal.onStart(checker);
     },
-    handleInput: (checker) => {
-      const x = input.mouseX;
-      const y = input.mouseY;
+    handleInput: (x, y, lBtnDown, checker) => {
       if (checker.data !== PieceState.blank) {
         return;
       }
       if (!checker.triangle.mouseCheck(x, y)) {
         return;
       }
-      if (input.lBtnDown) {
+      if (lBtnDown) {
         checker.changeState(CheckerState.keydown);
       } else {
         checker.changeState(CheckerState.hover);
@@ -952,10 +1023,8 @@ const CheckerState = {
     onStart: (checker) => {
       checker.setColor('yellow');
     },
-    handleInput: (checker) => {
-      const x = input.mouseX;
-      const y = input.mouseY;
-      if (input.lBtnDown) {
+    handleInput: (x, y, lBtnDown, checker) => {
+      if (lBtnDown) {
         checker.changeState(CheckerState.keydown);
       } else if (!checker.triangle.mouseCheck(x, y)) {
         checker.changeState(CheckerState.normal);
@@ -966,24 +1035,14 @@ const CheckerState = {
     onStart: (checker) => {
       checker.setColor('red');
     },
-    handleInput: (checker) => {
-      const x = input.mouseX;
-      const y = input.mouseY;
+    handleInput: (x, y, lBtnDown, checker) => {
       if (!checker.triangle.mouseCheck(x, y)) {
         checker.changeState(CheckerState.normal);
       }
-      if (!input.lBtnDown) {
-        // checker.changeState(CheckerState.hover);
-        checker.changeState(CheckerState.active);
+      if (!lBtnDown) {
+        checker.onactive(checker);
+        checker.changeState(CheckerState.normal);
       }
-    },
-  },
-  active: {
-    onStart: (checker) => {
-      checker.onactive(checker);
-    },
-    handleInput: (checker) => {
-      checker.changeState(CheckerState.normal);
     },
   },
 };
@@ -1033,12 +1092,12 @@ class TriangleChecker {
     this.state.onStart(this);
   }
 
-  render() {
+  render(ctx) {
     return this.triangle.draw && this.triangle.draw(ctx);
   }
 
-  handleInput() {
-    return this.state.handleInput && this.state.handleInput(this);
+  handleInput(x, y, lBtnDown) {
+    return this.state.handleInput && this.state.handleInput(x, y, lBtnDown, this);
   }
 
   update() {
@@ -1061,10 +1120,6 @@ class TriangleChecker {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _triangleChecker__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./triangleChecker */ "./src/triangleChecker.js");
-/* harmony import */ var _global__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./global */ "./src/global.js");
-/* eslint-disable no-param-reassign */
-/* eslint-disable no-bitwise */
-
 
 
 const cos30 = 0.866;
@@ -1083,6 +1138,7 @@ class History {
       white: board.white,
       ban: board.ban,
       ko: board.ko,
+      cclr: board.currentColor,
     });
     this.current += 1;
   }
@@ -1098,6 +1154,7 @@ class History {
     board.white = backup.white;
     board.ko = backup.ko;
     board.ban = backup.ban;
+    board.currentColor = backup.cclr;
     return true;
   }
 
@@ -1112,11 +1169,20 @@ class History {
     board.white = backup.white;
     board.ko = backup.ko;
     board.ban = backup.ban;
+    board.currentColor = backup.cclr;
     return true;
   }
 
-  contain(black, white) {
-    return this.data.some(v => v.black === black && v.white === white);
+  contain(black, white, currentColor) {
+    for (let i = 0; i <= this.current; i += 1) {
+      const backup = this.data[i];
+      if (backup.black === black && backup.white === white && backup.cclr === currentColor) {
+        return true;
+      }
+    }
+    return false;
+    // return this.data.some((v, i) => i <= this.current
+    // && v.black === black && v.white === white && v.cclr === currentColor);
   }
 
   clear() {
@@ -1200,6 +1266,7 @@ class TriangoBoard {
     this.white = 0; // 白棋
     this.ban = 0; // 禁入点
     this.ko = 0; // 劫
+    this.currentColor = _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].black;
     /** @type {TriChecker[]} */
     this.triCheckers = [];
     /** @type {{x:number,y:number}[][][]} */
@@ -1221,13 +1288,12 @@ class TriangoBoard {
             x: i,
             y: j,
           }, (checker) => {
-            const color = _global__WEBPACK_IMPORTED_MODULE_1__["default"].getAllPieceState().currentColor;
             const {
               x,
               y,
             } = checker.coordinate;
-            this.placePiece(x, y, color);
-            return color;
+            this.placePiece(x, y, this.currentColor);
+            return this.currentColor;
           });
         this.triCheckers.push(triChecker);
         up = !up;
@@ -1258,6 +1324,10 @@ class TriangoBoard {
     }
     this.updateAllCheckers();
     this.history = new History(this);
+  }
+
+  setCurrentColor(color) {
+    this.currentColor = color;
   }
 
   undo() {
@@ -1342,12 +1412,13 @@ class TriangoBoard {
   placePiece(x, y, color) {
     this.setData(x, y, color);
     this.updateBlackAndWhite(x, y);
-    this.updateBanAndKo();
-    this.updateAllCheckers();
-    this.history.push(this);
   }
 
-  updateBanAndKo() {
+  isGameEnd() {
+    return (this.black | this.white | this.ban | this.ko) === -1;
+  }
+
+  updateBanAndKo(clr) {
     this.ban = 0;
     this.ko = 0;
     const scanPoints = [];
@@ -1378,11 +1449,11 @@ class TriangoBoard {
         x,
         y,
       } = point;
-      this.setData(x, y, _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].currentColor);
+      this.setData(x, y, clr);
       this.updateBlackAndWhite(x, y);
       if (this.getData(x, y) === _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].blank) {
         this.setData(x, y, _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].ban);
-      } else if (this.history.contain(this.black, this.white, this.currentColor)) {
+      } else if (this.history.contain(this.black, this.white, clr)) {
         this.setData(x, y, _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].ko);
       }
       this.black = backupBlack;
@@ -1459,7 +1530,6 @@ class TriangoBoard {
       this.setData(point.x, point.y, _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].blank);
     });
     openlist.clear();
-    deletlist.length = 0;
   }
 
   updateAllCheckers() {
@@ -1475,27 +1545,30 @@ class TriangoBoard {
     });
   }
 
-  render() {
+  render(ctx) {
     this.triCheckers.forEach((triChecker) => {
-      triChecker.render();
+      triChecker.render(ctx);
     });
   }
 
-  handleInput(onboardchange) {
-    const olddata = {
+  handleInput(x, y, lBtnDown, onBoardChange, onGameEnd) {
+    const oldData = {
       black: this.black,
       white: this.white,
     };
-    this.triCheckers.forEach(triChecker => triChecker.handleInput());
-    if (!onboardchange) {
-      return;
-    }
+    this.triCheckers.forEach(triChecker => triChecker.handleInput(x, y, lBtnDown));
 
-    if (olddata.black !== this.black || olddata.white !== this.white) {
-      onboardchange();
-      this.updateBanAndKo();
+    if (oldData.black !== this.black || oldData.white !== this.white) {
+      onBoardChange && onBoardChange();
+      this.updateBanAndKo(this.currentColor);
       this.updateAllCheckers();
+      this.history.push(this);
+      if (this.isGameEnd()) {
+        onGameEnd && onGameEnd();
+      }
+      return true;
     }
+    return false;
   }
 
   clear() {
@@ -1503,6 +1576,7 @@ class TriangoBoard {
     this.white = 0; // 白棋
     this.ban = 0; // 禁入点
     this.ko = 0; // 劫
+    this.currentColor = _triangleChecker__WEBPACK_IMPORTED_MODULE_0__["PieceState"].black;
     this.history.clear();
     this.updateAllCheckers();
   }
