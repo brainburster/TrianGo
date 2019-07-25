@@ -30,9 +30,8 @@ const gameScene = (() => {
   function GameEnd() {
     game.changeState(GameStates.gameEnd);
   }
-  const triBoard = TriangoBoard.instance;
   const btnReturn = new CanvasButton(80, 50, 80, 50, 20, 'return', () => {
-    triBoard.clear();
+    triangoBoard.clear();
     game.changeState(GameStates.gameStart);
   });
   const btnUndo = new CanvasButton(80, 150, 80, 50, 20, 'undo', () => {
@@ -53,16 +52,21 @@ const gameScene = (() => {
     btnReturn.handleInput(x, y, lbtndown);
     btnRedo.handleInput(x, y, lbtndown);
     btnUndo.handleInput(x, y, lbtndown);
-    return triBoard.handleInput(x, y, lbtndown, onBoardChange, GameEnd);
+    return triangoBoard.handleInput(x, y, lbtndown, onBoardChange, GameEnd);
   };
   o.update = () => {
-    triBoard.update();
+    triangoBoard.update();
   };
   o.render = () => {
-    triBoard.render(ctx);
+    triangoBoard.render(ctx);
     btnRedo.render(ctx);
     btnUndo.render(ctx);
     btnReturn.render(ctx);
+    const {
+      black,
+      white,
+    } = triangoBoard.getScore();
+    ctx.fillText(`black:${black}  white:${white}`, 650, 50);
   };
   return o;
 })();
@@ -113,11 +117,16 @@ GameStates.gameEnd = (function GameEnd() {
     triangoBoard.clear();
     game.changeState(GameStates.gameStart);
   });
+  const btnUndo = new CanvasButton(80, 150, 80, 50, 20, 'undo', () => {
+    triangoBoard.undo();
+    game.lastState();
+  });
   o.handleInput = () => {
     const x = input.mouseX;
     const y = input.mouseY;
     const lbtndown = input.lBtnDown;
     btnReturn.handleInput(x, y, lbtndown);
+    btnUndo.handleInput(x, y, lbtndown);
   };
   o.update = () => {
     triangoBoard.update();
@@ -125,8 +134,15 @@ GameStates.gameEnd = (function GameEnd() {
   o.render = () => {
     triangoBoard.render(ctx);
     btnReturn.render(ctx);
+    btnUndo.render(ctx);
     ctx.fillStyle = 'black';
-    ctx.fillText('GameEnd!', 400, 50);
+    ctx.fillText('GameEnd!', 400, 30);
+    const {
+      black,
+      white,
+    } = triangoBoard.getScore();
+    ctx.fillText(`black:${black}  white:${white}`, 400, 80);
+    ctx.fillText(`${black > white ? 'black' : 'white'} Win`, 400, 130);
   };
   return o;
 }());
@@ -145,6 +161,9 @@ GameStates.debug = (() => {
     btnSwapColor.text === 'black' ? btnSwapColor.x = 210 : btnSwapColor.x = 330;
     triangoBoard.updateBanAndKo();
     triangoBoard.updateAllCheckers();
+    if (triangoBoard.isGameEnd()) {
+      game.changeState(GameStates.gameEnd);
+    }
   });
   const btnClear = new CanvasButton(450, 50, 80, 50, 20, 'clear', () => {
     triangoBoard.clear();
@@ -189,6 +208,10 @@ GameStates.twoP = (() => {
   };
   o.render = () => {
     gameScene.render();
+    ctx.fillStyle = 'black';
+    ctx.fillText('current:', 240, 50);
+    ctx.fillStyle = triangoBoard.currentColor === PieceState.black ? 'black' : 'white';
+    ctx.fillRect(300, 40, 20, 20);
   };
   return o;
 })();

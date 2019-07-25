@@ -229,6 +229,27 @@ class TriangoBoard {
     return false;
   }
 
+  getScore() {
+    let black = 0;
+    let white = 0;
+
+    let temp = this.black;
+    while (temp) {
+      temp &= temp - 1;
+      black += 1;
+    }
+    temp = this.white;
+    while (temp) {
+      temp &= temp - 1;
+      white += 1;
+    }
+
+    return {
+      black,
+      white,
+    };
+  }
+
   /**
    * 通过棋盘坐标获得数据
    * @param {number} x △ 的 x坐标 0~7

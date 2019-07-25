@@ -58,7 +58,7 @@ class Game {
     return this.state_stack.peek();
   }
 
-  rollbackState() {
+  lastState() {
     return this.state_stack.pop();
   }
 }
