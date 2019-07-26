@@ -34,7 +34,7 @@ function getScore(boardData) {
           black += 1;
           count1 += 1;
         } else if (sum === -adjs.length) {
-          white += 1;
+          white += 1.2;
           count2 += 1;
         }
       }
@@ -42,10 +42,10 @@ function getScore(boardData) {
   }
 
   if (count1 > 1) {
-    black += 4;
+    black += 6;
   }
   if (count2 > 1) {
-    white += 4;
+    white += 10;
   }
 
   return {
@@ -146,14 +146,14 @@ function run(data) {
   const remaining = 32 - score.black - score.white;
   if (remaining > 30) {
     maxDepth = 4;
-  } else if (remaining > 20) {
+  } else if (remaining > 24) {
     maxDepth = 5;
-  } else if (remaining > 14) {
+  } else if (remaining > 12) {
     maxDepth = 6;
   } else if (remaining > 8) {
     maxDepth = 7;
   } else {
-    maxDepth = 10;
+    maxDepth = 9;
   }
 
   alphaBeta(boardData, maxDepth, -1000000, 1000000);

@@ -12,9 +12,6 @@ const input = global.getInput();
 const ctx = global.getCtx();
 const triangoBoard = TriangoBoard.instance;
 
-/**
- * 所有游戏状态
- */
 const GameStates = {
   gameStart: null,
   gameEnd: null,
@@ -78,12 +75,6 @@ const gameScene = (() => {
   return o;
 })();
 
-
-// ///////////////////////////////////////
-/**
- * 游戏开始（设置）界面
- */
-// ///////////////////////////////////////
 GameStates.gameStart = (function GameStart() {
   const o = {};
   const btn1 = new CanvasButton(290, 120, 50, 50, 20, '2P', () => {
@@ -113,11 +104,6 @@ GameStates.gameStart = (function GameStart() {
   return o;
 }());
 
-// ///////////////////////////////////////
-/**
- * 游戏结束界面
- */
-// ///////////////////////////////////////
 GameStates.gameEnd = (function GameEnd() {
   const o = {};
   const btnReturn = new CanvasButton(80, 50, 80, 50, 20, 'return', () => {
@@ -154,11 +140,6 @@ GameStates.gameEnd = (function GameEnd() {
   return o;
 }());
 
-// ///////////////////////////////////////
-/**
- * debug mode
- */
-// ///////////////////////////////////////
 GameStates.debug = (() => {
   const o = {};
   const btnSwapColor = new CanvasButton(210, 50, 80, 50, 20, 'black', () => {
@@ -194,11 +175,6 @@ GameStates.debug = (() => {
   return o;
 })();
 
-// ///////////////////////////////////////
-/**
- * 2个人轮流下棋
- */
-// ///////////////////////////////////////
 GameStates.twoP = (() => {
   const o = {};
 
@@ -224,11 +200,6 @@ GameStates.twoP = (() => {
 })();
 
 
-// ///////////////////////////////////////
-/**
- * 轮到玩家的回合
- */
-// ///////////////////////////////////////
 GameStates.playersTurn = (function PlayersTurn() {
   const o = {};
 
@@ -250,12 +221,6 @@ GameStates.playersTurn = (function PlayersTurn() {
   return o;
 }());
 
-// ///////////////////////////////////////
-/**
- * 轮到轮到AI的回合
- * class AIsTurn : InGame
- */
-// ///////////////////////////////////////
 GameStates.aisTurn = (function AIsTurn() {
   const o = {};
   const ai = new AI(triangoBoard, (point) => {
@@ -274,7 +239,7 @@ GameStates.aisTurn = (function AIsTurn() {
     game.changeState(GameStates.gameEnd);
   });
   o.handleInput = () => {
-    gameScene.handleInputWithoutBoard();
+    // gameScene.handleInputWithoutBoard();
   };
   o.start = () => {
     ai.run();

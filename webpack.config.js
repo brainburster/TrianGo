@@ -10,8 +10,8 @@ const config = {
     path: path.resolve(__dirname, 'js'),
     filename: '[name].js',
   },
-  mode: 'development',
-  devtool: 'source-map',
+  mode: 'production',
+  /* devtool: 'source-map', */
 };
 
 module.exports = config;
