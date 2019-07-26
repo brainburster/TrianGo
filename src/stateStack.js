@@ -1,25 +1,3 @@
-// class State {
-//   constructor() {
-//     this.gameObjs = [];
-//   }
-
-// nextState() {
-//   throw 'abstract method';
-// }
-
-// handleInput() {
-//   throw 'abstract method';
-// }
-
-//   update() {
-//     this.gameObjs.forEach(obj => obj && obj.update && obj.update());
-//   }
-
-//   render() {
-//     this.gameObjs.forEach(obj => obj && obj.render && obj.render(this.ctx));
-//   }
-// }
-
 class StateStack {
   constructor() {
     this.states = [];

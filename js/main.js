@@ -96,11 +96,9 @@
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _pieceState__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../pieceState */ "./src/pieceState.js");
-// import TriangoBoard from './triangoBoard';
 
 
 class AI {
-  /** @param {TriangoBoard} board */
   constructor(board, onGameEnd) {
     this.board = board;
     this.onGameEnd = onGameEnd;
@@ -119,12 +117,17 @@ class AI {
       return null;
     }
     this.worker.postMessage({
-      white: this.board.white,
-      black: this.board.black,
-      ban: this.board.ban,
-      ko: this.board.ko,
+      white: this.board.data.white,
+      black: this.board.data.black,
+      ban: this.board.data.ban,
+      ko: this.board.data.ko,
     });
-    return this.best;
+    if (this.best) {
+      const temp = this.best;
+      this.best = null;
+      return temp;
+    }
+    return null;
   }
 }
 
@@ -368,7 +371,7 @@ __webpack_require__.r(__webpack_exports__);
 const game = _global__WEBPACK_IMPORTED_MODULE_0__["default"].getGame();
 const input = _global__WEBPACK_IMPORTED_MODULE_0__["default"].getInput();
 const ctx = _global__WEBPACK_IMPORTED_MODULE_0__["default"].getCtx();
-const triangoBoard = _triangoBoard__WEBPACK_IMPORTED_MODULE_2__["default"].instance;
+const triangoBoard = _triangoBoard__WEBPACK_IMPORTED_MODULE_2__["TriangoBoard"].instance;
 
 /**
  * 所有游戏状态
@@ -514,16 +517,13 @@ GameStates.debug = (() => {
   const o = {};
   const btnSwapColor = new _canvasButton__WEBPACK_IMPORTED_MODULE_1__["default"](210, 50, 80, 50, 20, 'black', () => {
     triangoBoard.setCurrentColor(btnSwapColor.text === 'black' ? _pieceState__WEBPACK_IMPORTED_MODULE_3__["default"].white : _pieceState__WEBPACK_IMPORTED_MODULE_3__["default"].black);
-    btnSwapColor.text = btnSwapColor.text === 'black' ? 'white' : 'black';
-    // eslint-disable-next-line no-unused-expressions
-    btnSwapColor.text === 'black' ? btnSwapColor.x = 210 : btnSwapColor.x = 330;
-    triangoBoard.updateBanAndKo();
+    triangoBoard.updateBanAndKo(triangoBoard.getCurrentColor());
     triangoBoard.updateAllCheckers();
     if (triangoBoard.isGameEnd()) {
       game.changeState(GameStates.gameEnd);
     }
   });
-  const btnClear = new _canvasButton__WEBPACK_IMPORTED_MODULE_1__["default"](450, 50, 80, 50, 20, 'clear', () => {
+  const btnClear = new _canvasButton__WEBPACK_IMPORTED_MODULE_1__["default"](460, 50, 80, 50, 20, 'clear', () => {
     triangoBoard.clear();
   });
   o.handleInput = () => {
@@ -535,6 +535,8 @@ GameStates.debug = (() => {
     gameScene.handleInput();
   };
   o.update = () => {
+    btnSwapColor.text = triangoBoard.getCurrentColor() === _pieceState__WEBPACK_IMPORTED_MODULE_3__["default"].white ? 'white' : 'black';
+    triangoBoard.getCurrentColor() === _pieceState__WEBPACK_IMPORTED_MODULE_3__["default"].white ? btnSwapColor.x = 210 : btnSwapColor.x = 330;
     gameScene.update();
   };
   o.render = () => {
@@ -828,28 +830,6 @@ const PieceState = {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-// class State {
-//   constructor() {
-//     this.gameObjs = [];
-//   }
-
-// nextState() {
-//   throw 'abstract method';
-// }
-
-// handleInput() {
-//   throw 'abstract method';
-// }
-
-//   update() {
-//     this.gameObjs.forEach(obj => obj && obj.update && obj.update());
-//   }
-
-//   render() {
-//     this.gameObjs.forEach(obj => obj && obj.render && obj.render(this.ctx));
-//   }
-// }
-
 class StateStack {
   constructor() {
     this.states = [];
@@ -1154,11 +1134,13 @@ class TriangleChecker {
 /*!*****************************!*\
   !*** ./src/triangoBoard.js ***!
   \*****************************/
-/*! exports provided: default */
+/*! exports provided: TriBoardData, TriangoBoard */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "TriBoardData", function() { return TriBoardData; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "TriangoBoard", function() { return TriangoBoard; });
 /* harmony import */ var _pieceState__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./pieceState */ "./src/pieceState.js");
 /* harmony import */ var _triangleChecker__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./triangleChecker */ "./src/triangleChecker.js");
 
@@ -1619,7 +1601,7 @@ class TriangoBoard {
 
   undo() {
     if (this.data.undo()) {
-      this.updateBanAndKo();
+      this.updateBanAndKo(this.getCurrentColor());
       this.updateAllCheckers();
       return true;
     }
@@ -1628,7 +1610,7 @@ class TriangoBoard {
 
   redo() {
     if (this.data.redo()) {
-      this.updateBanAndKo();
+      this.updateBanAndKo(this.getCurrentColor());
       this.updateAllCheckers();
       return true;
     }
@@ -1711,7 +1693,7 @@ class TriangoBoard {
 
 TriangoBoard.instance = new TriangoBoard();
 
-/* harmony default export */ __webpack_exports__["default"] = (TriangoBoard);
+
 
 
 /***/ })

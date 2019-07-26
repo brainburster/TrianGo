@@ -1,8 +1,6 @@
-// import TriangoBoard from './triangoBoard';
 import PieceState from '../pieceState';
 
 class AI {
-  /** @param {TriangoBoard} board */
   constructor(board, onGameEnd) {
     this.board = board;
     this.onGameEnd = onGameEnd;
@@ -21,12 +19,17 @@ class AI {
       return null;
     }
     this.worker.postMessage({
-      white: this.board.white,
-      black: this.board.black,
-      ban: this.board.ban,
-      ko: this.board.ko,
+      white: this.board.data.white,
+      black: this.board.data.black,
+      ban: this.board.data.ban,
+      ko: this.board.data.ko,
     });
-    return this.best;
+    if (this.best) {
+      const temp = this.best;
+      this.best = null;
+      return temp;
+    }
+    return null;
   }
 }
 

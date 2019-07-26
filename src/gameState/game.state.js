@@ -1,6 +1,8 @@
 import global from '../global';
 import CanvasButton from '../canvasButton';
-import TriangoBoard from '../triangoBoard';
+import {
+  TriangoBoard,
+} from '../triangoBoard';
 import PieceState from '../pieceState';
 import AI from '../AI/AI';
 
@@ -154,16 +156,13 @@ GameStates.debug = (() => {
   const o = {};
   const btnSwapColor = new CanvasButton(210, 50, 80, 50, 20, 'black', () => {
     triangoBoard.setCurrentColor(btnSwapColor.text === 'black' ? PieceState.white : PieceState.black);
-    btnSwapColor.text = btnSwapColor.text === 'black' ? 'white' : 'black';
-    // eslint-disable-next-line no-unused-expressions
-    btnSwapColor.text === 'black' ? btnSwapColor.x = 210 : btnSwapColor.x = 330;
-    triangoBoard.updateBanAndKo();
+    triangoBoard.updateBanAndKo(triangoBoard.getCurrentColor());
     triangoBoard.updateAllCheckers();
     if (triangoBoard.isGameEnd()) {
       game.changeState(GameStates.gameEnd);
     }
   });
-  const btnClear = new CanvasButton(450, 50, 80, 50, 20, 'clear', () => {
+  const btnClear = new CanvasButton(460, 50, 80, 50, 20, 'clear', () => {
     triangoBoard.clear();
   });
   o.handleInput = () => {
@@ -175,6 +174,8 @@ GameStates.debug = (() => {
     gameScene.handleInput();
   };
   o.update = () => {
+    btnSwapColor.text = triangoBoard.getCurrentColor() === PieceState.white ? 'white' : 'black';
+    triangoBoard.getCurrentColor() === PieceState.white ? btnSwapColor.x = 210 : btnSwapColor.x = 330;
     gameScene.update();
   };
   o.render = () => {

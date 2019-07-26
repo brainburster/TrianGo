@@ -456,7 +456,7 @@ class TriangoBoard {
 
   undo() {
     if (this.data.undo()) {
-      this.updateBanAndKo();
+      this.updateBanAndKo(this.getCurrentColor());
       this.updateAllCheckers();
       return true;
     }
@@ -465,7 +465,7 @@ class TriangoBoard {
 
   redo() {
     if (this.data.redo()) {
-      this.updateBanAndKo();
+      this.updateBanAndKo(this.getCurrentColor());
       this.updateAllCheckers();
       return true;
     }
@@ -548,4 +548,7 @@ class TriangoBoard {
 
 TriangoBoard.instance = new TriangoBoard();
 
-export default TriangoBoard;
+export {
+  TriBoardData,
+  TriangoBoard,
+};

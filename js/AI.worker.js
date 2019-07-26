@@ -98,13 +98,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _pieceState__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../pieceState */ "./src/pieceState.js");
 
 
-function run(board) {
+function run(data) {
   let x;
   let y;
   do {
     x = Math.random() * 8 >>> 0;
     y = Math.random() * 4 >>> 0;
-  } while (board.getData(x, y) !== _pieceState__WEBPACK_IMPORTED_MODULE_0__["default"].blank);
+  } while (data.getData(x, y) !== _pieceState__WEBPACK_IMPORTED_MODULE_0__["default"].blank);
   return {
     x,
     y,
@@ -131,7 +131,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 onmessage = (e) => {
-  const board = new _triangoBoard__WEBPACK_IMPORTED_MODULE_1__["default"]();
+  const board = new _triangoBoard__WEBPACK_IMPORTED_MODULE_1__["TriBoardData"]();
   board.black = e.data.black;
   board.white = e.data.white;
   board.ko = e.data.ko;
@@ -419,11 +419,13 @@ class TriangleChecker {
 /*!*****************************!*\
   !*** ./src/triangoBoard.js ***!
   \*****************************/
-/*! exports provided: default */
+/*! exports provided: TriBoardData, TriangoBoard */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "TriBoardData", function() { return TriBoardData; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "TriangoBoard", function() { return TriangoBoard; });
 /* harmony import */ var _pieceState__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./pieceState */ "./src/pieceState.js");
 /* harmony import */ var _triangleChecker__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./triangleChecker */ "./src/triangleChecker.js");
 
@@ -884,7 +886,7 @@ class TriangoBoard {
 
   undo() {
     if (this.data.undo()) {
-      this.updateBanAndKo();
+      this.updateBanAndKo(this.getCurrentColor());
       this.updateAllCheckers();
       return true;
     }
@@ -893,7 +895,7 @@ class TriangoBoard {
 
   redo() {
     if (this.data.redo()) {
-      this.updateBanAndKo();
+      this.updateBanAndKo(this.getCurrentColor());
       this.updateAllCheckers();
       return true;
     }
@@ -976,7 +978,7 @@ class TriangoBoard {
 
 TriangoBoard.instance = new TriangoBoard();
 
-/* harmony default export */ __webpack_exports__["default"] = (TriangoBoard);
+
 
 
 /***/ })
