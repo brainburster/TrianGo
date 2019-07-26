@@ -8,7 +8,7 @@ const best = {
   y: 0,
 };
 
-const maxDepth = 5;
+let maxDepth = 5;
 
 /** @param {TriBoardData} boardData */
 function getScore(boardData) {
@@ -40,11 +40,12 @@ function getScore(boardData) {
       }
     }
   }
+
   if (count1 > 1) {
-    black += 6;
+    black += 4;
   }
   if (count2 > 1) {
-    white += 6;
+    white += 4;
   }
 
   return {
@@ -141,11 +142,21 @@ function alphaBeta(boardData, depth, alpha, beta) {
 
 function run(data) {
   const boardData = new TriBoardData(data);
-  do {
-    best.x = Math.random() * 8 >>> 0;
-    best.y = Math.random() * 4 >>> 0;
-  } while (boardData.getData(best.x, best.y) !== PieceState.blank);
-  alphaBeta(boardData, maxDepth, -100000, 100000);
+  const score = boardData.getScore();
+  const remaining = 32 - score.black - score.white;
+  if (remaining > 30) {
+    maxDepth = 4;
+  } else if (remaining > 20) {
+    maxDepth = 5;
+  } else if (remaining > 14) {
+    maxDepth = 6;
+  } else if (remaining > 8) {
+    maxDepth = 7;
+  } else {
+    maxDepth = 10;
+  }
+
+  alphaBeta(boardData, maxDepth, -1000000, 1000000);
   return best;
 }
 
