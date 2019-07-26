@@ -1,61 +1,59 @@
-import {
-  PieceState,
-  TriangleChecker as TriChecker,
-} from './triangleChecker';
+import PieceState from './pieceState';
+import TriChecker from './triangleChecker';
 
 const cos30 = 0.866;
 
 class History {
-  constructor(board) {
+  constructor(data) {
     this.data = [];
     this.current = -1;
-    this.push(board);
+    this.push(data);
   }
 
-  push(board) {
+  push(data) {
     this.data.length = this.current + 1;
     this.data.push({
-      black: board.black,
-      white: board.white,
-      ban: board.ban,
-      ko: board.ko,
-      cclr: board.currentColor,
+      black: data.black,
+      white: data.white,
+      ban: data.ban,
+      ko: data.ko,
+      cclr: data.currentColor,
     });
     this.current += 1;
   }
 
-  undo(board) {
+  undo(data) {
     this.current -= 1;
     if (this.current === -1) {
       this.current = 0;
       return false;
     }
     const backup = this.data[this.current];
-    board.black = backup.black;
-    board.white = backup.white;
-    board.ko = backup.ko;
-    board.ban = backup.ban;
-    board.currentColor = backup.cclr;
+    data.black = backup.black;
+    data.white = backup.white;
+    data.ko = backup.ko;
+    data.ban = backup.ban;
+    data.currentColor = backup.cclr;
     return true;
   }
 
-  redo(board) {
+  redo(data) {
     this.current += 1;
     if (this.current === this.data.length) {
       this.current = this.data.length - 1;
       return false;
     }
     const backup = this.data[this.current];
-    board.black = backup.black;
-    board.white = backup.white;
-    board.ko = backup.ko;
-    board.ban = backup.ban;
-    board.currentColor = backup.cclr;
+    data.black = backup.black;
+    data.white = backup.white;
+    data.ko = backup.ko;
+    data.ban = backup.ban;
+    data.currentColor = backup.cclr;
     return true;
   }
 
   contain(black, white, currentColor) {
-    for (let i = 0; i <= this.current; i += 1) {
+    for (let i = this.current; i > -1; i -= 1) {
       const backup = this.data[i];
       if (backup.black === black && backup.white === white && backup.cclr === currentColor) {
         return true;
@@ -140,7 +138,7 @@ function getOppositeColor(color) {
   }
 }
 
-class TriangoBoard {
+class TriBoardData {
   constructor() {
     // 棋盘数据，棋盘大小4x2x4, 数据大小 32*4 bit
     this.black = 0; // 黑棋
@@ -148,36 +146,14 @@ class TriangoBoard {
     this.ban = 0; // 禁入点
     this.ko = 0; // 劫
     this.currentColor = PieceState.black;
-    /** @type {TriChecker[]} */
-    this.triCheckers = [];
+    this.history = new History(this);
     /** @type {{x:number,y:number}[][][]} */
     this.adjacencylist = [];
     for (let i = 0; i < 8; i += 1) {
       this.adjacencylist.push([]);
     }
-    let up = true;
-    const r = 60;
-    const offsetX = 90;
-    const offsetY = 520;
-    const gapX = 1 / cos30;
-    const gapY = 1;
     for (let j = 0; j < 4; j += 1) {
       for (let i = 0; i < 8; i += 1) {
-        // 添加checker
-        const triChecker = new TriChecker(offsetX + i * (r * cos30 + gapX) + j * (r * cos30 + gapY),
-          offsetY - (1 + j) * (r * 1.5 + gapY), r, up, {
-            x: i,
-            y: j,
-          }, (checker) => {
-            const {
-              x,
-              y,
-            } = checker.coordinate;
-            this.placePiece(x, y, this.currentColor);
-            return this.currentColor;
-          });
-        this.triCheckers.push(triChecker);
-        up = !up;
         this.adjacencylist[i][j] = [];
         const ii1 = i - 1;
         const ii2 = i + 1;
@@ -203,30 +179,22 @@ class TriangoBoard {
         }
       }
     }
-    this.updateAllCheckers();
-    this.history = new History(this);
+  }
+
+  save() {
+    this.history.push(this);
+  }
+
+  undo() {
+    return this.history.undo(this);
+  }
+
+  redo() {
+    return this.history.redo(this);
   }
 
   setCurrentColor(color) {
     this.currentColor = color;
-  }
-
-  undo() {
-    if (this.history.undo(this)) {
-      this.updateBanAndKo();
-      this.updateAllCheckers();
-      return true;
-    }
-    return false;
-  }
-
-  redo() {
-    if (this.history.redo(this)) {
-      this.updateBanAndKo();
-      this.updateAllCheckers();
-      return true;
-    }
-    return false;
   }
 
   getScore() {
@@ -250,12 +218,6 @@ class TriangoBoard {
     };
   }
 
-  /**
-   * 通过棋盘坐标获得数据
-   * @param {number} x △ 的 x坐标 0~7
-   * @param {number} y △ 的 y坐标 0~3
-   * @returns {PieceState} 返回一个棋子状态的“枚举值”
-   */
   getData(x, y) {
     if (x < 0 || x > 7 || y < 0 || y > 3) {
       return PieceState.void;
@@ -276,12 +238,6 @@ class TriangoBoard {
     return PieceState.blank;
   }
 
-  /**
-   * 通过棋盘坐标设置数据
-   * @param {number} x △ 的 x坐标 0~7
-   * @param {number} y △ 的 y坐标 0~3
-   * @param {PieceState} data 棋子的状态 {PieceState}
-   */
   setData(x, y, data) {
     if (x < 0 || x > 7 || y < 0 || y > 3) {
       return;
@@ -309,11 +265,6 @@ class TriangoBoard {
       default:
         break;
     }
-  }
-
-  placePiece(x, y, color) {
-    this.setData(x, y, color);
-    this.updateBlackAndWhite(x, y);
   }
 
   isGameEnd() {
@@ -434,11 +385,38 @@ class TriangoBoard {
     openlist.clear();
   }
 
-  updateAllCheckers() {
-    this.triCheckers.forEach((triChecker) => {
-      const data = this.getData(triChecker.coordinate.x, triChecker.coordinate.y);
-      triChecker.setData(data);
-    });
+  clear() {
+    this.black = 0; // 黑棋
+    this.white = 0; // 白棋
+    this.ban = 0; // 禁入点
+    this.ko = 0; // 劫
+    this.currentColor = PieceState.black;
+    this.history.clear();
+  }
+}
+
+class TriBoardView {
+  constructor(onactive) {
+    /** @type {TriChecker[]} */
+    this.triCheckers = [];
+    let up = true;
+    const r = 60;
+    const offsetX = 90;
+    const offsetY = 520;
+    const gapX = 1 / cos30;
+    const gapY = 1;
+    for (let j = 0; j < 4; j += 1) {
+      for (let i = 0; i < 8; i += 1) {
+        // 添加checker
+        const triChecker = new TriChecker(offsetX + i * (r * cos30 + gapX) + j * (r * cos30 + gapY),
+          offsetY - (1 + j) * (r * 1.5 + gapY), r, up, {
+            x: i,
+            y: j,
+          }, onactive);
+        this.triCheckers.push(triChecker);
+        up = !up;
+      }
+    }
   }
 
   update() {
@@ -452,19 +430,108 @@ class TriangoBoard {
       triChecker.render(ctx);
     });
   }
+}
+
+class TriangoBoard {
+  constructor() {
+    this.data = new TriBoardData();
+    this.view = new TriBoardView((checker) => {
+      const {
+        x,
+        y,
+      } = checker.coordinate;
+      this.placePiece(x, y, this.getCurrentColor());
+      return this.getCurrentColor();
+    });
+    this.updateAllCheckers();
+  }
+
+  save() {
+    this.data.save();
+  }
+
+  setCurrentColor(color) {
+    this.data.setCurrentColor(color);
+  }
+
+  undo() {
+    if (this.data.undo()) {
+      this.updateBanAndKo();
+      this.updateAllCheckers();
+      return true;
+    }
+    return false;
+  }
+
+  redo() {
+    if (this.data.redo()) {
+      this.updateBanAndKo();
+      this.updateAllCheckers();
+      return true;
+    }
+    return false;
+  }
+
+  getScore() {
+    return this.data.getScore();
+  }
+
+  getData(x, y) {
+    return this.data.getData(x, y);
+  }
+
+  setData(x, y, data) {
+    this.data.setData(x, y, data);
+  }
+
+  placePiece(x, y, color) {
+    this.setData(x, y, color);
+    this.updateBlackAndWhite(x, y);
+  }
+
+  isGameEnd() {
+    return this.data.isGameEnd();
+  }
+
+  updateBanAndKo(color) {
+    this.data.updateBanAndKo(color);
+  }
+
+  updateBlackAndWhite(x, y) {
+    this.data.updateBlackAndWhite(x, y);
+  }
+
+  updateAllCheckers() {
+    this.view.triCheckers.forEach((triChecker) => {
+      const data = this.getData(triChecker.coordinate.x, triChecker.coordinate.y);
+      triChecker.setData(data);
+    });
+  }
+
+  update() {
+    this.view.update();
+  }
+
+  render(ctx) {
+    this.view.render(ctx);
+  }
+
+  getCurrentColor() {
+    return this.data.currentColor;
+  }
 
   handleInput(x, y, lBtnDown, onBoardChange, onGameEnd) {
     const oldData = {
-      black: this.black,
-      white: this.white,
+      black: this.data.black,
+      white: this.data.white,
     };
-    this.triCheckers.forEach(triChecker => triChecker.handleInput(x, y, lBtnDown));
+    this.view.triCheckers.forEach(triChecker => triChecker.handleInput(x, y, lBtnDown));
 
-    if (oldData.black !== this.black || oldData.white !== this.white) {
+    if (oldData.black !== this.data.black || oldData.white !== this.data.white) {
       onBoardChange && onBoardChange();
-      this.updateBanAndKo(this.currentColor);
+      this.updateBanAndKo(this.getCurrentColor());
       this.updateAllCheckers();
-      this.history.push(this);
+      this.save();
       if (this.isGameEnd()) {
         onGameEnd && onGameEnd();
       }
@@ -474,12 +541,7 @@ class TriangoBoard {
   }
 
   clear() {
-    this.black = 0; // 黑棋
-    this.white = 0; // 白棋
-    this.ban = 0; // 禁入点
-    this.ko = 0; // 劫
-    this.currentColor = PieceState.black;
-    this.history.clear();
+    this.data.clear();
     this.updateAllCheckers();
   }
 }

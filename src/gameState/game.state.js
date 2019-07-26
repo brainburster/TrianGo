@@ -1,10 +1,8 @@
 import global from '../global';
 import CanvasButton from '../canvasButton';
 import TriangoBoard from '../triangoBoard';
-import {
-  PieceState,
-} from '../triangleChecker';
-import AI from '../AI';
+import PieceState from '../pieceState';
+import AI from '../AI/AI';
 
 
 const game = global.getGame();
@@ -196,7 +194,7 @@ GameStates.twoP = (() => {
   const o = {};
 
   function swapColor() {
-    triangoBoard.setCurrentColor(triangoBoard.currentColor === PieceState.black
+    triangoBoard.setCurrentColor(triangoBoard.getCurrentColor() === PieceState.black
       ? PieceState.white : PieceState.black);
   }
 
@@ -210,7 +208,7 @@ GameStates.twoP = (() => {
     gameScene.render();
     ctx.fillStyle = 'black';
     ctx.fillText('current:', 240, 50);
-    ctx.fillStyle = triangoBoard.currentColor === PieceState.black ? 'black' : 'white';
+    ctx.fillStyle = triangoBoard.getCurrentColor() === PieceState.black ? 'black' : 'white';
     ctx.fillRect(300, 40, 20, 20);
   };
   return o;
@@ -263,6 +261,8 @@ GameStates.aisTurn = (function AIsTurn() {
       triangoBoard.placePiece(point.x, point.y, PieceState.white);
       triangoBoard.updateBanAndKo(PieceState.black);
       triangoBoard.updateAllCheckers();
+      triangoBoard.data.history.current -= 1;
+      triangoBoard.save();
       game.changeState(GameStates.playersTurn);
     }
     gameScene.update();

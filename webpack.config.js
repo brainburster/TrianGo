@@ -2,13 +2,16 @@ const path = require('path');
 
 const config = {
   target: 'web',
-  entry: './src/main.js',
+  entry: {
+    main: './src/main.js',
+    'AI.worker': './src/AI/AI.worker.js',
+  },
   output: {
     path: path.resolve(__dirname, 'js'),
-    filename: 'main.js'
+    filename: '[name].js',
   },
   mode: 'development',
-  devtool: 'source-map'
+  devtool: 'source-map',
 };
 
 module.exports = config;
