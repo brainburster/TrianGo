@@ -99,35 +99,29 @@ __webpack_require__.r(__webpack_exports__);
 
 
 class AI {
-  constructor(board, onGameEnd) {
+  constructor(board, callback, onGameEnd) {
     this.board = board;
     this.onGameEnd = onGameEnd;
     this.worker = new Worker('./js/AI.worker.js');
-    this.best = null;
     this.worker.onmessage = (e) => {
-      this.best = e.data;
+      callback && callback(e.data);
     };
   }
 
+
   run() {
-    this.worker.postMessage('Hello');
     this.board.updateBanAndKo(_pieceState__WEBPACK_IMPORTED_MODULE_0__["default"].white);
     if (this.board.isGameEnd()) {
       this.onGameEnd && this.onGameEnd();
-      return null;
+      return;
     }
     this.worker.postMessage({
       white: this.board.data.white,
       black: this.board.data.black,
       ban: this.board.data.ban,
       ko: this.board.data.ko,
+      currentColor: _pieceState__WEBPACK_IMPORTED_MODULE_0__["default"].white,
     });
-    if (this.best) {
-      const temp = this.best;
-      this.best = null;
-      return temp;
-    }
-    return null;
   }
 }
 
@@ -405,7 +399,14 @@ const gameScene = (() => {
       triangoBoard.updateAllCheckers();
     }
   });
-
+  o.handleInputWithoutBoard = () => {
+    const x = input.mouseX;
+    const y = input.mouseY;
+    const lbtndown = input.lBtnDown;
+    btnReturn.handleInput(x, y, lbtndown);
+    btnRedo.handleInput(x, y, lbtndown);
+    btnUndo.handleInput(x, y, lbtndown);
+  };
   o.handleInput = (onBoardChange) => {
     const x = input.mouseX;
     const y = input.mouseY;
@@ -536,7 +537,8 @@ GameStates.debug = (() => {
   };
   o.update = () => {
     btnSwapColor.text = triangoBoard.getCurrentColor() === _pieceState__WEBPACK_IMPORTED_MODULE_3__["default"].white ? 'white' : 'black';
-    triangoBoard.getCurrentColor() === _pieceState__WEBPACK_IMPORTED_MODULE_3__["default"].white ? btnSwapColor.x = 210 : btnSwapColor.x = 330;
+    triangoBoard.getCurrentColor() === _pieceState__WEBPACK_IMPORTED_MODULE_3__["default"].white
+      ? btnSwapColor.x = 210 : btnSwapColor.x = 330;
     gameScene.update();
   };
   o.render = () => {
@@ -610,24 +612,31 @@ GameStates.playersTurn = (function PlayersTurn() {
  */
 // ///////////////////////////////////////
 GameStates.aisTurn = (function AIsTurn() {
-  const o = {};
-  const ai = new _AI_AI__WEBPACK_IMPORTED_MODULE_4__["default"](triangoBoard, () => {
+  const o = {
+    lock: true,
+  };
+  const ai = new _AI_AI__WEBPACK_IMPORTED_MODULE_4__["default"](triangoBoard, (point) => {
+    triangoBoard.placePiece(point.x, point.y, _pieceState__WEBPACK_IMPORTED_MODULE_3__["default"].white);
+    triangoBoard.updateBanAndKo(_pieceState__WEBPACK_IMPORTED_MODULE_3__["default"].black);
+    triangoBoard.updateAllCheckers();
+    triangoBoard.data.history.current -= 1;
+    triangoBoard.save();
+    game.changeState(GameStates.playersTurn);
+    o.lock = true;
+  }, () => {
     triangoBoard.updateBanAndKo(_pieceState__WEBPACK_IMPORTED_MODULE_3__["default"].white);
     triangoBoard.updateAllCheckers();
     game.changeState(GameStates.gameEnd);
   });
-
+  o.handleInput = () => {
+    gameScene.handleInputWithoutBoard();
+  };
   o.update = () => {
-    const point = ai.run();
-    if (point) {
-      triangoBoard.placePiece(point.x, point.y, _pieceState__WEBPACK_IMPORTED_MODULE_3__["default"].white);
-      triangoBoard.updateBanAndKo(_pieceState__WEBPACK_IMPORTED_MODULE_3__["default"].black);
-      triangoBoard.updateAllCheckers();
-      triangoBoard.data.history.current -= 1;
-      triangoBoard.save();
-      game.changeState(GameStates.playersTurn);
-    }
     gameScene.update();
+    if (o.lock) {
+      o.lock = false;
+      ai.run();
+    }
   };
   o.render = () => {
     gameScene.render();
@@ -1284,13 +1293,20 @@ function getOppositeColor(color) {
 }
 
 class TriBoardData {
-  constructor() {
+  constructor(data) {
     // 棋盘数据，棋盘大小4x2x4, 数据大小 32*4 bit
     this.black = 0; // 黑棋
     this.white = 0; // 白棋
     this.ban = 0; // 禁入点
     this.ko = 0; // 劫
     this.currentColor = _pieceState__WEBPACK_IMPORTED_MODULE_0__["default"].black;
+    if (data) {
+      this.black = data.black;
+      this.white = data.white;
+      this.ban = data.ban;
+      this.ko = data.ko;
+      this.currentColor = data.currentColor;
+    }
     this.history = new History(this);
     /** @type {{x:number,y:number}[][][]} */
     this.adjacencylist = [];
@@ -1324,6 +1340,10 @@ class TriBoardData {
         }
       }
     }
+  }
+
+  swapColor() {
+    this.currentColor = getOppositeColor(this.currentColor);
   }
 
   save() {

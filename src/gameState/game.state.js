@@ -44,7 +44,14 @@ const gameScene = (() => {
       triangoBoard.updateAllCheckers();
     }
   });
-
+  o.handleInputWithoutBoard = () => {
+    const x = input.mouseX;
+    const y = input.mouseY;
+    const lbtndown = input.lBtnDown;
+    btnReturn.handleInput(x, y, lbtndown);
+    btnRedo.handleInput(x, y, lbtndown);
+    btnUndo.handleInput(x, y, lbtndown);
+  };
   o.handleInput = (onBoardChange) => {
     const x = input.mouseX;
     const y = input.mouseY;
@@ -175,7 +182,8 @@ GameStates.debug = (() => {
   };
   o.update = () => {
     btnSwapColor.text = triangoBoard.getCurrentColor() === PieceState.white ? 'white' : 'black';
-    triangoBoard.getCurrentColor() === PieceState.white ? btnSwapColor.x = 210 : btnSwapColor.x = 330;
+    triangoBoard.getCurrentColor() === PieceState.white
+      ? btnSwapColor.x = 210 : btnSwapColor.x = 330;
     gameScene.update();
   };
   o.render = () => {
@@ -249,24 +257,31 @@ GameStates.playersTurn = (function PlayersTurn() {
  */
 // ///////////////////////////////////////
 GameStates.aisTurn = (function AIsTurn() {
-  const o = {};
-  const ai = new AI(triangoBoard, () => {
+  const o = {
+    lock: true,
+  };
+  const ai = new AI(triangoBoard, (point) => {
+    triangoBoard.placePiece(point.x, point.y, PieceState.white);
+    triangoBoard.updateBanAndKo(PieceState.black);
+    triangoBoard.updateAllCheckers();
+    triangoBoard.data.history.current -= 1;
+    triangoBoard.save();
+    game.changeState(GameStates.playersTurn);
+    o.lock = true;
+  }, () => {
     triangoBoard.updateBanAndKo(PieceState.white);
     triangoBoard.updateAllCheckers();
     game.changeState(GameStates.gameEnd);
   });
-
+  o.handleInput = () => {
+    gameScene.handleInputWithoutBoard();
+  };
   o.update = () => {
-    const point = ai.run();
-    if (point) {
-      triangoBoard.placePiece(point.x, point.y, PieceState.white);
-      triangoBoard.updateBanAndKo(PieceState.black);
-      triangoBoard.updateAllCheckers();
-      triangoBoard.data.history.current -= 1;
-      triangoBoard.save();
-      game.changeState(GameStates.playersTurn);
-    }
     gameScene.update();
+    if (o.lock) {
+      o.lock = false;
+      ai.run();
+    }
   };
   o.render = () => {
     gameScene.render();

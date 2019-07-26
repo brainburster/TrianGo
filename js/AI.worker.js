@@ -96,19 +96,86 @@
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _pieceState__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../pieceState */ "./src/pieceState.js");
+/* harmony import */ var _triangoBoard__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../triangoBoard */ "./src/triangoBoard.js");
 
+
+
+const best = {
+  x: 0,
+  y: 0,
+};
+const maxDepth = 4;
+
+/**
+ * 极大极小值算法
+ * @param {TriBoardData} boardData
+ */
+function alphaBeta(boardData, depth, alpha, beta) {
+  if (boardData.isGameEnd()) {
+    const {
+      black,
+      white,
+    } = boardData.getScore();
+    const score = boardData.currentColor === _pieceState__WEBPACK_IMPORTED_MODULE_0__["default"].black ? black - white : white - black;
+    return score * 1000;
+  }
+  if (depth < 1) {
+    const {
+      black,
+      white,
+    } = boardData.getScore();
+    return boardData.currentColor === _pieceState__WEBPACK_IMPORTED_MODULE_0__["default"].black ? black - white : white - black;
+  }
+
+  const buckup = {
+    black: boardData.black,
+    white: boardData.white,
+    ban: boardData.ban,
+    ko: boardData.ko,
+    currentColor: boardData.currentColor,
+  };
+
+  for (let j = 0; j < 4; j += 1) {
+    for (let i = 0; i < 8; i += 1) {
+      if (boardData.getData(i, j) !== _pieceState__WEBPACK_IMPORTED_MODULE_0__["default"].blank) {
+        continue;
+      }
+      boardData.setData(i, j, boardData.currentColor);
+      boardData.updateBlackAndWhite(i, j);
+      boardData.swapColor();
+      boardData.updateBanAndKo(boardData.currentColor);
+
+      const score = -alphaBeta(boardData, depth - 1, -beta, -alpha);
+
+      boardData.black = buckup.black;
+      boardData.white = buckup.white;
+      boardData.ban = buckup.ban;
+      boardData.ko = buckup.ko;
+      boardData.currentColor = buckup.currentColor;
+
+      if (score > alpha) {
+        alpha = score;
+        if (depth === maxDepth) {
+          best.x = i;
+          best.y = j;
+        }
+      }
+      if (score >= beta) {
+        break;
+      }
+    }
+  }
+  return alpha;
+}
 
 function run(data) {
-  let x;
-  let y;
-  do {
-    x = Math.random() * 8 >>> 0;
-    y = Math.random() * 4 >>> 0;
-  } while (data.getData(x, y) !== _pieceState__WEBPACK_IMPORTED_MODULE_0__["default"].blank);
-  return {
-    x,
-    y,
-  };
+  const boardData = new _triangoBoard__WEBPACK_IMPORTED_MODULE_1__["TriBoardData"](data);
+  // do {
+  //   best.x = Math.random() * 8 >>> 0;
+  //   best.y = Math.random() * 4 >>> 0;
+  // } while (boardData.getData(best.x, best.y) !== PieceState.blank);
+  alphaBeta(boardData, maxDepth, -10000, 10000);
+  return best;
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (run);
@@ -120,24 +187,19 @@ function run(data) {
 /*!*****************************!*\
   !*** ./src/AI/AI.worker.js ***!
   \*****************************/
-/*! no exports provided */
+/*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _AI_impl__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./AI.impl */ "./src/AI/AI.impl.js");
-/* harmony import */ var _triangoBoard__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../triangoBoard */ "./src/triangoBoard.js");
-
 
 
 onmessage = (e) => {
-  const board = new _triangoBoard__WEBPACK_IMPORTED_MODULE_1__["TriBoardData"]();
-  board.black = e.data.black;
-  board.white = e.data.white;
-  board.ko = e.data.ko;
-  board.ban = e.data.ban;
-  postMessage(Object(_AI_impl__WEBPACK_IMPORTED_MODULE_0__["default"])(board));
+  postMessage(Object(_AI_impl__WEBPACK_IMPORTED_MODULE_0__["default"])(e.data));
 };
+
+/* harmony default export */ __webpack_exports__["default"] = (undefined);
 
 
 /***/ }),
@@ -569,13 +631,20 @@ function getOppositeColor(color) {
 }
 
 class TriBoardData {
-  constructor() {
+  constructor(data) {
     // 棋盘数据，棋盘大小4x2x4, 数据大小 32*4 bit
     this.black = 0; // 黑棋
     this.white = 0; // 白棋
     this.ban = 0; // 禁入点
     this.ko = 0; // 劫
     this.currentColor = _pieceState__WEBPACK_IMPORTED_MODULE_0__["default"].black;
+    if (data) {
+      this.black = data.black;
+      this.white = data.white;
+      this.ban = data.ban;
+      this.ko = data.ko;
+      this.currentColor = data.currentColor;
+    }
     this.history = new History(this);
     /** @type {{x:number,y:number}[][][]} */
     this.adjacencylist = [];
@@ -609,6 +678,10 @@ class TriBoardData {
         }
       }
     }
+  }
+
+  swapColor() {
+    this.currentColor = getOppositeColor(this.currentColor);
   }
 
   save() {

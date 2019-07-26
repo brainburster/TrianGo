@@ -16,6 +16,7 @@ module.exports = {
     "linebreak-style": [0, "error", "windows"],
     "no-unused-expressions": 0,
     "no-param-reassign": 0,
-    "no-bitwise": 0
+    "no-bitwise": 0,
+    "no-continue": 0,
   }
 }
