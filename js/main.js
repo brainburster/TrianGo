@@ -325,6 +325,7 @@ class Game {
 
   changeState(state) {
     this.state_stack.push(state);
+    this.state_stack.start();
   }
 
   getState() {
@@ -332,7 +333,8 @@ class Game {
   }
 
   lastState() {
-    return this.state_stack.pop();
+    this.state_stack.pop();
+    this.state_stack.start();
   }
 }
 
@@ -428,7 +430,7 @@ const gameScene = (() => {
       black,
       white,
     } = triangoBoard.getScore();
-    ctx.fillText(`black:${black}  white:${white}`, 650, 50);
+    ctx.fillText(`Black:[${black}]  White:[${white}]`, 650, 50);
   };
   return o;
 })();
@@ -503,8 +505,8 @@ GameStates.gameEnd = (function GameEnd() {
       black,
       white,
     } = triangoBoard.getScore();
-    ctx.fillText(`black:${black}  white:${white}`, 400, 80);
-    ctx.fillText(`${black > white ? 'black' : 'white'} Win`, 400, 130);
+    ctx.fillText(`Black:[${black}]  White:[${white}]`, 400, 80);
+    ctx.fillText(`${black > white ? 'Black' : 'White'} Win`, 400, 130);
   };
   return o;
 }());
@@ -612,9 +614,7 @@ GameStates.playersTurn = (function PlayersTurn() {
  */
 // ///////////////////////////////////////
 GameStates.aisTurn = (function AIsTurn() {
-  const o = {
-    lock: true,
-  };
+  const o = {};
   const ai = new _AI_AI__WEBPACK_IMPORTED_MODULE_4__["default"](triangoBoard, (point) => {
     triangoBoard.placePiece(point.x, point.y, _pieceState__WEBPACK_IMPORTED_MODULE_3__["default"].white);
     triangoBoard.updateBanAndKo(_pieceState__WEBPACK_IMPORTED_MODULE_3__["default"].black);
@@ -622,21 +622,22 @@ GameStates.aisTurn = (function AIsTurn() {
     triangoBoard.data.history.current -= 1;
     triangoBoard.save();
     game.changeState(GameStates.playersTurn);
-    o.lock = true;
+    if (triangoBoard.isGameEnd()) {
+      game.changeState(GameStates.gameEnd);
+    }
   }, () => {
-    triangoBoard.updateBanAndKo(_pieceState__WEBPACK_IMPORTED_MODULE_3__["default"].white);
     triangoBoard.updateAllCheckers();
+    game.changeState(GameStates.gameStart);
     game.changeState(GameStates.gameEnd);
   });
   o.handleInput = () => {
     gameScene.handleInputWithoutBoard();
   };
+  o.start = () => {
+    ai.run();
+  };
   o.update = () => {
     gameScene.update();
-    if (o.lock) {
-      o.lock = false;
-      ai.run();
-    }
   };
   o.render = () => {
     gameScene.render();
@@ -852,7 +853,6 @@ class StateStack {
     return this.states[--this.top]; // eslint-disable-line
   }
 
-  /** @param {State} state */
   push(state) {
     this.states[this.top++] = state; // eslint-disable-line
   }
@@ -872,6 +872,11 @@ class StateStack {
     delete this.states;
     this.states = [];
     this.top = 0;
+  }
+
+  start() {
+    const topState = this.peek();
+    return topState && topState.start && topState.start();
   }
 
   handleInput() {
@@ -1471,7 +1476,7 @@ class TriBoardData {
       this.updateBlackAndWhite(x, y);
       if (this.getData(x, y) === _pieceState__WEBPACK_IMPORTED_MODULE_0__["default"].blank) {
         this.setData(x, y, _pieceState__WEBPACK_IMPORTED_MODULE_0__["default"].ban);
-      } else if (this.history.contain(this.black, this.white, clr)) {
+      } else if (this.history.contain(this.black, this.white, getOppositeColor(clr))) {
         this.setData(x, y, _pieceState__WEBPACK_IMPORTED_MODULE_0__["default"].ko);
       }
       this.black = backupBlack;

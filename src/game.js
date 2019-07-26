@@ -52,6 +52,7 @@ class Game {
 
   changeState(state) {
     this.state_stack.push(state);
+    this.state_stack.start();
   }
 
   getState() {
@@ -59,7 +60,8 @@ class Game {
   }
 
   lastState() {
-    return this.state_stack.pop();
+    this.state_stack.pop();
+    this.state_stack.start();
   }
 }
 

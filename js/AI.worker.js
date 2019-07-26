@@ -104,7 +104,71 @@ const best = {
   x: 0,
   y: 0,
 };
-const maxDepth = 4;
+
+const maxDepth = 5;
+
+/** @param {TriBoardData} boardData */
+function getScore(boardData) {
+  let black = 0;
+  let white = 0;
+  let count1 = 0;
+  let count2 = 0;
+  for (let j = 0; j < 4; j += 1) {
+    for (let i = 0; i < 8; i += 1) {
+      const color = boardData.getData(i, j);
+      if (color === _pieceState__WEBPACK_IMPORTED_MODULE_0__["default"].black) {
+        black += 1;
+      } else if (color === _pieceState__WEBPACK_IMPORTED_MODULE_0__["default"].white) {
+        white += 1;
+      } else if (color !== _pieceState__WEBPACK_IMPORTED_MODULE_0__["default"].void) {
+        const adjs = boardData.adjacencylist[i][j];
+        const sum = adjs.reduce((x, y) => {
+          const clr = boardData.getData(y.x, y.y);
+          // eslint-disable-next-line no-nested-ternary
+          return x + (clr === _pieceState__WEBPACK_IMPORTED_MODULE_0__["default"].black ? 1 : (clr === _pieceState__WEBPACK_IMPORTED_MODULE_0__["default"].white ? -1 : 0));
+        }, 0);
+        if (sum === adjs.length) {
+          black += 1;
+          count1 += 1;
+        } else if (sum === -adjs.length) {
+          white += 1;
+          count2 += 1;
+        }
+      }
+    }
+  }
+  if (count1 > 1) {
+    black += 6;
+  }
+  if (count2 > 1) {
+    white += 6;
+  }
+
+  return {
+    black,
+    white,
+  };
+}
+
+/** @param {TriBoardData} boardData */
+function getAllCanPlacePoint(boardData) {
+  const pointList = [];
+  for (let j = 0; j < 4; j += 1) {
+    for (let i = 0; i < 8; i += 1) {
+      const color = boardData.getData(i, j);
+      if (color === _pieceState__WEBPACK_IMPORTED_MODULE_0__["default"].blank) {
+        pointList.push({
+          x: i,
+          y: j,
+        });
+      }
+    }
+  }
+
+  pointList.sort(() => Math.random() - 0.5);
+
+  return pointList;
+}
 
 /**
  * 极大极小值算法
@@ -117,13 +181,13 @@ function alphaBeta(boardData, depth, alpha, beta) {
       white,
     } = boardData.getScore();
     const score = boardData.currentColor === _pieceState__WEBPACK_IMPORTED_MODULE_0__["default"].black ? black - white : white - black;
-    return score * 1000;
+    return score * 100;
   }
   if (depth < 1) {
     const {
       black,
       white,
-    } = boardData.getScore();
+    } = getScore(boardData);
     return boardData.currentColor === _pieceState__WEBPACK_IMPORTED_MODULE_0__["default"].black ? black - white : white - black;
   }
 
@@ -135,34 +199,38 @@ function alphaBeta(boardData, depth, alpha, beta) {
     currentColor: boardData.currentColor,
   };
 
-  for (let j = 0; j < 4; j += 1) {
-    for (let i = 0; i < 8; i += 1) {
-      if (boardData.getData(i, j) !== _pieceState__WEBPACK_IMPORTED_MODULE_0__["default"].blank) {
-        continue;
-      }
-      boardData.setData(i, j, boardData.currentColor);
-      boardData.updateBlackAndWhite(i, j);
-      boardData.swapColor();
-      boardData.updateBanAndKo(boardData.currentColor);
+  const openlist = getAllCanPlacePoint(boardData);
 
-      const score = -alphaBeta(boardData, depth - 1, -beta, -alpha);
+  for (let i = 0; i < openlist.length; i += 1) {
+    const {
+      x,
+      y,
+    } = openlist[i];
+    if (boardData.getData(x, y) !== _pieceState__WEBPACK_IMPORTED_MODULE_0__["default"].blank) {
+      continue;
+    }
+    boardData.setData(x, y, boardData.currentColor);
+    boardData.updateBlackAndWhite(x, y);
+    boardData.swapColor();
+    boardData.updateBanAndKo(boardData.currentColor);
 
-      boardData.black = buckup.black;
-      boardData.white = buckup.white;
-      boardData.ban = buckup.ban;
-      boardData.ko = buckup.ko;
-      boardData.currentColor = buckup.currentColor;
+    const score = -alphaBeta(boardData, depth - 1, -beta, -alpha);
 
-      if (score > alpha) {
-        alpha = score;
-        if (depth === maxDepth) {
-          best.x = i;
-          best.y = j;
-        }
+    boardData.black = buckup.black;
+    boardData.white = buckup.white;
+    boardData.ban = buckup.ban;
+    boardData.ko = buckup.ko;
+    boardData.currentColor = buckup.currentColor;
+
+    if (score > alpha) {
+      alpha = score;
+      if (depth === maxDepth) {
+        best.x = x;
+        best.y = y;
       }
-      if (score >= beta) {
-        break;
-      }
+    }
+    if (score >= beta) {
+      break;
     }
   }
   return alpha;
@@ -170,11 +238,11 @@ function alphaBeta(boardData, depth, alpha, beta) {
 
 function run(data) {
   const boardData = new _triangoBoard__WEBPACK_IMPORTED_MODULE_1__["TriBoardData"](data);
-  // do {
-  //   best.x = Math.random() * 8 >>> 0;
-  //   best.y = Math.random() * 4 >>> 0;
-  // } while (boardData.getData(best.x, best.y) !== PieceState.blank);
-  alphaBeta(boardData, maxDepth, -10000, 10000);
+  do {
+    best.x = Math.random() * 8 >>> 0;
+    best.y = Math.random() * 4 >>> 0;
+  } while (boardData.getData(best.x, best.y) !== _pieceState__WEBPACK_IMPORTED_MODULE_0__["default"].blank);
+  alphaBeta(boardData, maxDepth, -100000, 100000);
   return best;
 }
 
@@ -809,7 +877,7 @@ class TriBoardData {
       this.updateBlackAndWhite(x, y);
       if (this.getData(x, y) === _pieceState__WEBPACK_IMPORTED_MODULE_0__["default"].blank) {
         this.setData(x, y, _pieceState__WEBPACK_IMPORTED_MODULE_0__["default"].ban);
-      } else if (this.history.contain(this.black, this.white, clr)) {
+      } else if (this.history.contain(this.black, this.white, getOppositeColor(clr))) {
         this.setData(x, y, _pieceState__WEBPACK_IMPORTED_MODULE_0__["default"].ko);
       }
       this.black = backupBlack;

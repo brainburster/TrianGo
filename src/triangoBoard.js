@@ -317,7 +317,7 @@ class TriBoardData {
       this.updateBlackAndWhite(x, y);
       if (this.getData(x, y) === PieceState.blank) {
         this.setData(x, y, PieceState.ban);
-      } else if (this.history.contain(this.black, this.white, clr)) {
+      } else if (this.history.contain(this.black, this.white, getOppositeColor(clr))) {
         this.setData(x, y, PieceState.ko);
       }
       this.black = backupBlack;

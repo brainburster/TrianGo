@@ -73,7 +73,7 @@ const gameScene = (() => {
       black,
       white,
     } = triangoBoard.getScore();
-    ctx.fillText(`black:${black}  white:${white}`, 650, 50);
+    ctx.fillText(`Black:[${black}]  White:[${white}]`, 650, 50);
   };
   return o;
 })();
@@ -148,8 +148,8 @@ GameStates.gameEnd = (function GameEnd() {
       black,
       white,
     } = triangoBoard.getScore();
-    ctx.fillText(`black:${black}  white:${white}`, 400, 80);
-    ctx.fillText(`${black > white ? 'black' : 'white'} Win`, 400, 130);
+    ctx.fillText(`Black:[${black}]  White:[${white}]`, 400, 80);
+    ctx.fillText(`${black > white ? 'Black' : 'White'} Win`, 400, 130);
   };
   return o;
 }());
@@ -257,9 +257,7 @@ GameStates.playersTurn = (function PlayersTurn() {
  */
 // ///////////////////////////////////////
 GameStates.aisTurn = (function AIsTurn() {
-  const o = {
-    lock: true,
-  };
+  const o = {};
   const ai = new AI(triangoBoard, (point) => {
     triangoBoard.placePiece(point.x, point.y, PieceState.white);
     triangoBoard.updateBanAndKo(PieceState.black);
@@ -267,21 +265,22 @@ GameStates.aisTurn = (function AIsTurn() {
     triangoBoard.data.history.current -= 1;
     triangoBoard.save();
     game.changeState(GameStates.playersTurn);
-    o.lock = true;
+    if (triangoBoard.isGameEnd()) {
+      game.changeState(GameStates.gameEnd);
+    }
   }, () => {
-    triangoBoard.updateBanAndKo(PieceState.white);
     triangoBoard.updateAllCheckers();
+    game.changeState(GameStates.gameStart);
     game.changeState(GameStates.gameEnd);
   });
   o.handleInput = () => {
     gameScene.handleInputWithoutBoard();
   };
+  o.start = () => {
+    ai.run();
+  };
   o.update = () => {
     gameScene.update();
-    if (o.lock) {
-      o.lock = false;
-      ai.run();
-    }
   };
   o.render = () => {
     gameScene.render();

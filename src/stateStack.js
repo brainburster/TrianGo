@@ -11,7 +11,6 @@ class StateStack {
     return this.states[--this.top]; // eslint-disable-line
   }
 
-  /** @param {State} state */
   push(state) {
     this.states[this.top++] = state; // eslint-disable-line
   }
@@ -31,6 +30,11 @@ class StateStack {
     delete this.states;
     this.states = [];
     this.top = 0;
+  }
+
+  start() {
+    const topState = this.peek();
+    return topState && topState.start && topState.start();
   }
 
   handleInput() {
