@@ -153,7 +153,7 @@ function run(data) {
   } else if (remaining > 8) {
     maxDepth = 7;
   } else {
-    maxDepth = 9;
+    maxDepth = 8;
   }
 
   alphaBeta(boardData, maxDepth, -1000000, 1000000);

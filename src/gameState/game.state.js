@@ -223,6 +223,7 @@ GameStates.playersTurn = (function PlayersTurn() {
 
 GameStates.aisTurn = (function AIsTurn() {
   const o = {};
+  let text = '';
   const ai = new AI(triangoBoard, (point) => {
     triangoBoard.placePiece(point.x, point.y, PieceState.white);
     triangoBoard.updateBanAndKo(PieceState.black);
@@ -246,11 +247,16 @@ GameStates.aisTurn = (function AIsTurn() {
   };
   o.update = () => {
     gameScene.update();
+    text += '.';
+    if (text.length >= 16) {
+      text = '';
+    }
   };
   o.render = () => {
     gameScene.render();
     ctx.fillStyle = 'black';
-    ctx.fillText('AI', 400, 50);
+    ctx.fillText('AI thinking:', 400, 50);
+    ctx.fillText(text, 400, 80);
   };
   return o;
 }());
