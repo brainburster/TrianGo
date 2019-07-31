@@ -73,6 +73,16 @@ class Input {
       this.keyDown[e.key] = false;
       this.keyCodeDown[e.keyCode] = false;
     });
+    this.canvas.addEventListener('touchstart', (e) => {
+      this.mouseX = e.targetTouches[0].clientX - this.canvas.offsetLeft;
+      this.mouseY = e.targetTouches[0].clientY - this.canvas.offsetTop;
+      this.lBtnDown = true;
+      e.preventDefault();
+    });
+    this.canvas.addEventListener('touchend', (e) => {
+      this.lBtnDown = false;
+      e.preventDefault();
+    });
   }
 }
 
