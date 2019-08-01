@@ -237,13 +237,14 @@ class TriBoardData {
           const adjs = this.adjacencylist[i][j];
           const sum = adjs.reduce((x, y) => {
             const clr = this.getData(y.x, y.y);
-            return x + (clr === PieceState.black ? 4 : (clr === PieceState.white ? -1 : 0)); // eslint-disable-line no-nested-ternary
+            // eslint-disable-next-line no-nested-ternary
+            return x + (clr === PieceState.black ? 1 : (clr === PieceState.white ? -1 : 0));
           }, 0);
-          if (sum === adjs.length * 4) {
+          if (sum === adjs.length) {
             black += 1;
           } else if (sum === -adjs.length) {
             white += 1;
-          } else if (sum !== 0) {
+          } else {
             black += 0.5;
             white += 0.5;
           }

@@ -197,6 +197,7 @@ GameStates.playersTurn = (function PlayersTurn() {
 
   function waitAI() {
     game.changeState(GameStates.aisTurn);
+    triangoBoard.setCurrentColor(PieceState.white);
   }
 
   o.handleInput = () => {
@@ -218,6 +219,7 @@ GameStates.aisTurn = (function AIsTurn() {
   let text = '';
   const ai = new AI(triangoBoard, (point) => {
     triangoBoard.placePiece(point.x, point.y, PieceState.white);
+    triangoBoard.setCurrentColor(PieceState.black);
     triangoBoard.updateBanAndKo(PieceState.black);
     triangoBoard.updateAllCheckers();
     triangoBoard.data.history.current -= 1;

@@ -12,18 +12,17 @@ const maxDepth = 7;
 
 /** @param {TriBoardData} boardData */
 function getScore(boardData) {
-  let black = 0;
-  let white = 0;
-  let count1 = 0;
-  let count2 = 0;
+  let {
+    black,
+    white,
+  } = boardData.getScore();
+
+  const blackEyes = [];
+  const whiteEyes = [];
   for (let j = 0; j < 4; j += 1) {
     for (let i = 0; i < 8; i += 1) {
       const color = boardData.getData(i, j);
-      if (color === PieceState.black) {
-        black += 1;
-      } else if (color === PieceState.white) {
-        white += 1;
-      } else if (color !== PieceState.void) {
+      if (color === PieceState.blank || color === PieceState.ko || color === PieceState.ban) {
         const adjs = boardData.adjacencylist[i][j];
         const sum = adjs.reduce((x, y) => {
           const clr = boardData.getData(y.x, y.y);
@@ -31,22 +30,67 @@ function getScore(boardData) {
           return x + (clr === PieceState.black ? 1 : (clr === PieceState.white ? -1 : 0));
         }, 0);
         if (sum === adjs.length) {
-          black += 1;
-          count1 += 1;
+          blackEyes.push(i + j * 8);
         } else if (sum === -adjs.length) {
-          white += 1;
-          count2 += 1;
+          whiteEyes.push(i + j * 8);
         }
       }
     }
   }
 
-  if (count1 > 1) {
-    black += 6;
-  }
-  if (count2 > 1) {
-    white += 6;
-  }
+  let countBlack = 0;
+  let countWhite = 0;
+
+  blackEyes.forEach((index) => {
+    const x = index & 0b111;
+    const y = index >>> 3;
+    const openlist = [];
+    const closelist = [];
+    openlist.push(boardData.adjacencylist[x][y][0]);
+    while (openlist.length > 0) {
+      const value = openlist.pop();
+      boardData.adjacencylist[value.x][value.y].forEach((v) => {
+        if (closelist.some(u => u.x === v.x && u.y === v.y)) {
+          return;
+        }
+        if (boardData.getData(v.x, v.y) === PieceState.black) {
+          openlist.push(v);
+        }
+      });
+      closelist.push(value);
+    }
+    if (boardData.adjacencylist[x][y].every(v => closelist.some(u => u.x === v.x && u.y === v.y))) {
+      countBlack += 1;
+    }
+  });
+
+  whiteEyes.forEach((index) => {
+    const x = index & 0b111;
+    const y = index >>> 3;
+    const openlist = [];
+    const closelist = [];
+    openlist.push(boardData.adjacencylist[x][y][0]);
+    while (openlist.length > 0) {
+      const value = openlist.pop();
+      boardData.adjacencylist[value.x][value.y].forEach((v) => {
+        if (closelist.some(u => u.x === v.x && u.y === v.y)) {
+          return;
+        }
+        if (boardData.getData(v.x, v.y) === PieceState.white) {
+          openlist.push(v);
+        }
+      });
+      closelist.push(value);
+    }
+    if (boardData.adjacencylist[x][y].every(v => closelist.some(u => u.x === v.x && u.y === v.y))) {
+      countWhite += 1;
+    }
+  });
+
+  const count2score = [1, 2, 4, 4, 4, 4, 4, 4];
+
+  black += count2score[countBlack];
+  white += count2score[countWhite];
 
   return {
     black,
@@ -65,7 +109,7 @@ function getAllCanPlacePoint(boardData) {
         boardData.adjacencylist[i][j].forEach((value) => {
           const clr = boardData.getData(value.x, value.y);
           if (clr === PieceState.black || clr === PieceState.white) {
-            score += 1;
+            score += 1.5;
           }
           boardData.adjacencylist[value.x][value.y].forEach((v) => {
             const c = boardData.getData(v.x, v.y);
@@ -86,8 +130,8 @@ function getAllCanPlacePoint(boardData) {
 
   pointList.sort((a, b) => b.score - a.score + Math.random() - 0.5);
 
-  if (pointList.length > 8) {
-    pointList.length = 8;
+  if (pointList.length > 10) {
+    pointList.length = 10;
   }
 
   return pointList;
