@@ -61,15 +61,34 @@ function getAllCanPlacePoint(boardData) {
     for (let i = 0; i < 8; i += 1) {
       const color = boardData.getData(i, j);
       if (color === PieceState.blank) {
+        let score = 0;
+        boardData.adjacencylist[i][j].forEach((value) => {
+          const clr = boardData.getData(value.x, value.y);
+          if (clr === PieceState.black || clr === PieceState.white) {
+            score += 1;
+          }
+          boardData.adjacencylist[value.x][value.y].forEach((v) => {
+            const c = boardData.getData(v.x, v.y);
+            if (c === PieceState.black || c === PieceState.white) {
+              score += 1;
+            }
+          });
+        });
+
         pointList.push({
           x: i,
           y: j,
+          score,
         });
       }
     }
   }
 
-  pointList.sort(() => Math.random() - 0.5);
+  pointList.sort((a, b) => b.score - a.score + Math.random() - 0.5);
+
+  if (pointList.length > 6) {
+    pointList.length = 6;
+  }
 
   return pointList;
 }
