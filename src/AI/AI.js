@@ -17,13 +17,7 @@ class AI {
       this.onGameEnd && this.onGameEnd();
       return;
     }
-    this.worker.postMessage({
-      white: this.board.data.white,
-      black: this.board.data.black,
-      ban: this.board.data.ban,
-      ko: this.board.data.ko,
-      currentColor: PieceState.white,
-    });
+    this.worker.postMessage(this.board.data);
   }
 }
 

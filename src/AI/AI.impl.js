@@ -8,7 +8,7 @@ const best = {
   y: 0,
 };
 
-let maxDepth = 5;
+const maxDepth = 8;
 
 /** @param {TriBoardData} boardData */
 function getScore(boardData) {
@@ -34,7 +34,7 @@ function getScore(boardData) {
           black += 1;
           count1 += 1;
         } else if (sum === -adjs.length) {
-          white += 1.2;
+          white += 1;
           count2 += 1;
         }
       }
@@ -45,7 +45,7 @@ function getScore(boardData) {
     black += 6;
   }
   if (count2 > 1) {
-    white += 10;
+    white += 6;
   }
 
   return {
@@ -86,8 +86,8 @@ function getAllCanPlacePoint(boardData) {
 
   pointList.sort((a, b) => b.score - a.score + Math.random() - 0.5);
 
-  if (pointList.length > 6) {
-    pointList.length = 6;
+  if (pointList.length > 8) {
+    pointList.length = 8;
   }
 
   return pointList;
@@ -161,20 +161,8 @@ function alphaBeta(boardData, depth, alpha, beta) {
 
 function run(data) {
   const boardData = new TriBoardData(data);
-  const score = boardData.getScore();
-  const remaining = 32 - score.black - score.white;
-  if (remaining > 30) {
-    maxDepth = 4;
-  } else if (remaining > 24) {
-    maxDepth = 5;
-  } else if (remaining > 12) {
-    maxDepth = 6;
-  } else if (remaining > 8) {
-    maxDepth = 7;
-  } else {
-    maxDepth = 8;
-  }
-
+  boardData.currentColor = PieceState.white;
+  boardData.updateBanAndKo(PieceState.white);
   alphaBeta(boardData, maxDepth, -1000000, 1000000);
   return best;
 }

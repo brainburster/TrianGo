@@ -60,8 +60,6 @@ class History {
       }
     }
     return false;
-    // return this.data.some((v, i) => i <= this.current
-    // && v.black === black && v.white === white && v.cclr === currentColor);
   }
 
   clear() {
@@ -140,19 +138,24 @@ function getOppositeColor(color) {
 
 class TriBoardData {
   constructor(data) {
-    // 棋盘数据，棋盘大小4x2x4, 数据大小 32*4 bit
-    this.black = 0; // 黑棋
-    this.white = 0; // 白棋
-    this.ban = 0; // 禁入点
-    this.ko = 0; // 劫
-    this.currentColor = PieceState.black;
     if (data) {
       this.black = data.black;
       this.white = data.white;
       this.ban = data.ban;
       this.ko = data.ko;
       this.currentColor = data.currentColor;
+      this.history = new History(this);
+      this.history.data = data.history.data;
+      this.history.current = data.history.current;
+      this.adjacencylist = data.adjacencylist;
+      return;
     }
+    // 棋盘数据，棋盘大小4x2x4, 数据大小 32*4 bit
+    this.black = 0; // 黑棋
+    this.white = 0; // 白棋
+    this.ban = 0; // 禁入点
+    this.ko = 0; // 劫
+    this.currentColor = PieceState.black;
     this.history = new History(this);
     /** @type {{x:number,y:number}[][][]} */
     this.adjacencylist = [];
