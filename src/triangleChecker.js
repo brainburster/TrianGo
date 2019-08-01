@@ -6,10 +6,6 @@ import PieceState from './pieceState';
  */
 const CheckerState = {
   normal: {
-    /**
-     * @fanction
-     * @param {TriangleChecker} checker
-     */
     onStart: (checker) => {
       let szColor = 'gray';
       switch (checker.data) {
@@ -52,10 +48,6 @@ const CheckerState = {
     },
   },
   hover: {
-    /**
-     * @fanction
-     * @param {TriangleChecker} checker
-     */
     onStart: (checker) => {
       checker.setColor('yellow');
     },

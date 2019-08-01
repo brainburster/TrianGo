@@ -215,15 +215,40 @@ class TriBoardData {
     let black = 0;
     let white = 0;
 
-    let temp = this.black;
-    while (temp) {
-      temp &= temp - 1;
-      black += 1;
-    }
-    temp = this.white;
-    while (temp) {
-      temp &= temp - 1;
-      white += 1;
+    // let temp = this.black;
+    // while (temp) {
+    //   temp &= temp - 1;
+    //   black += 1;
+    // }
+    // temp = this.white;
+    // while (temp) {
+    //   temp &= temp - 1;
+    //   white += 1;
+    // }
+
+    for (let j = 0; j < 4; j += 1) {
+      for (let i = 0; i < 8; i += 1) {
+        const color = this.getData(i, j);
+        if (color === PieceState.black) {
+          black += 1;
+        } else if (color === PieceState.white) {
+          white += 1;
+        } else if (color !== PieceState.void) {
+          const adjs = this.adjacencylist[i][j];
+          const sum = adjs.reduce((x, y) => {
+            const clr = this.getData(y.x, y.y);
+            return x + (clr === PieceState.black ? 4 : (clr === PieceState.white ? -1 : 0)); // eslint-disable-line no-nested-ternary
+          }, 0);
+          if (sum === adjs.length * 4) {
+            black += 1;
+          } else if (sum === -adjs.length) {
+            white += 1;
+          } else if (sum !== 0) {
+            black += 0.5;
+            white += 0.5;
+          }
+        }
+      }
     }
 
     return {

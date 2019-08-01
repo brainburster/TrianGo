@@ -8,7 +8,7 @@ const best = {
   y: 0,
 };
 
-const maxDepth = 8;
+const maxDepth = 7;
 
 /** @param {TriBoardData} boardData */
 function getScore(boardData) {
@@ -163,7 +163,9 @@ function run(data) {
   const boardData = new TriBoardData(data);
   boardData.currentColor = PieceState.white;
   boardData.updateBanAndKo(PieceState.white);
+
   alphaBeta(boardData, maxDepth, -1000000, 1000000);
+
   return best;
 }
 

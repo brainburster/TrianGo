@@ -41,14 +41,6 @@ const gameScene = (() => {
       triangoBoard.updateAllCheckers();
     }
   });
-  o.handleInputWithoutBoard = () => {
-    const x = input.mouseX;
-    const y = input.mouseY;
-    const lbtndown = input.lBtnDown;
-    btnReturn.handleInput(x, y, lbtndown);
-    btnRedo.handleInput(x, y, lbtndown);
-    btnUndo.handleInput(x, y, lbtndown);
-  };
   o.handleInput = (onBoardChange) => {
     const x = input.mouseX;
     const y = input.mouseY;
@@ -236,11 +228,11 @@ GameStates.aisTurn = (function AIsTurn() {
     }
   }, () => {
     triangoBoard.updateAllCheckers();
-    game.changeState(GameStates.gameStart);
+    game.changeState(GameStates.playersTurn);
     game.changeState(GameStates.gameEnd);
   });
   o.handleInput = () => {
-    // gameScene.handleInputWithoutBoard();
+
   };
   o.start = () => {
     ai.run();
