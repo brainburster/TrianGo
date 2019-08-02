@@ -27,7 +27,7 @@ const gameScene = (() => {
   function GameEnd() {
     game.changeState(GameStates.gameEnd);
   }
-  const btnReturn = new CanvasButton(80, 50, 80, 50, 20, 'return', () => {
+  const btnReturn = new CanvasButton(80, 50, 80, 50, 20, 'back', () => {
     triangoBoard.clear();
     game.changeState(GameStates.gameStart);
   });
@@ -98,7 +98,7 @@ GameStates.gameStart = (function GameStart() {
 
 GameStates.gameEnd = (function GameEnd() {
   const o = {};
-  const btnReturn = new CanvasButton(80, 50, 80, 50, 20, 'return', () => {
+  const btnReturn = new CanvasButton(80, 50, 80, 50, 20, 'back', () => {
     triangoBoard.clear();
     game.changeState(GameStates.gameStart);
   });
